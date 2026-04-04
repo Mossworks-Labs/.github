@@ -27,12 +27,16 @@ on:
         description: "Path to containerd socket"
         type: string
         default: "/run/containerd/containerd.sock"
+      environment:
+        description: "GitHub environment name (matches DNS hostname)"
+        type: string
+        default: "dev.local.rudolphhome.com"
 
 jobs:
   deploy:
     name: Deploy
     runs-on: self-hosted
-    environment: production
+    environment: ${{ inputs.environment }}
     steps:
       - uses: actions/checkout@v4
 

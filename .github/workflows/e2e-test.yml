@@ -24,9 +24,9 @@ on:
         type: string
         default: "npx playwright test"
       environment:
-        description: "GitHub environment (for secrets)"
+        description: "GitHub environment name (matches DNS hostname)"
         type: string
-        default: "production"
+        default: "dev.local.rudolphhome.com"
       commit-screenshots:
         description: "Commit screenshot changes back to branch"
         type: boolean
