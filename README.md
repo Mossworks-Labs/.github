@@ -40,3 +40,28 @@ jobs:
       chart-path: ./helm/craft
       images: "studio frontend"
 ```
+
+### `codeql.yml`
+CodeQL static analysis (free for public repos).
+
+```yaml
+jobs:
+  codeql:
+    uses: VibeSmiths/.github/.github/workflows/codeql.yml@main
+    with:
+      languages: javascript
+```
+
+### `dependency-review.yml`
+Dependency review on PRs — flags high-severity vulnerabilities in new dependencies.
+
+```yaml
+jobs:
+  dependency-review:
+    if: github.event_name == 'pull_request'
+    uses: VibeSmiths/.github/.github/workflows/dependency-review.yml@main
+```
+
+## Org Workflow Templates
+
+The `workflow-templates/security.yml` template is available to all VibeSmiths repos via **Actions > New workflow > VibeSmiths Security**.

@@ -1,0 +1,5 @@
+{
+  "name": "VibeSmiths Security",
+  "description": "CodeQL analysis + dependency review for VibeSmiths repos",
+  "categories": ["Security"]
+}
