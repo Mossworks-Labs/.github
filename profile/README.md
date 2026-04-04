@@ -26,6 +26,26 @@
 | [mcp-musicgen](https://github.com/VibeSmiths/mcp-musicgen) | Text-to-music generation (Meta AudioCraft) — CUDA + ROCm |
 | [mcp-rvc](https://github.com/VibeSmiths/mcp-rvc) | Voice cloning via Retrieval-based Voice Conversion — CUDA + ROCm |
 
+### Docker Packages
+
+All images published to GitHub Container Registry (`ghcr.io/vibesmiths/videoideas`):
+
+| Package | Source | Runtime |
+|---------|--------|---------|
+| [`studio`](https://ghcr.io/vibesmiths/videoideas/studio) | [VideoIdeas](https://github.com/VibeSmiths/VideoIdeas) | Node.js 22 Alpine |
+| [`frontend`](https://ghcr.io/vibesmiths/videoideas/frontend) | [VideoIdeas](https://github.com/VibeSmiths/VideoIdeas) | nginx |
+| [`mcp-storytelling`](https://ghcr.io/vibesmiths/videoideas/mcp-storytelling) | [mcp-storytelling](https://github.com/VibeSmiths/mcp-storytelling) | Node.js 22 Alpine |
+| [`mcp-comedy`](https://ghcr.io/vibesmiths/videoideas/mcp-comedy) | [mcp-comedy](https://github.com/VibeSmiths/mcp-comedy) | Node.js 22 Alpine |
+| [`mcp-yt-dlp`](https://ghcr.io/vibesmiths/videoideas/mcp-yt-dlp) | [mcp-yt-dlp](https://github.com/VibeSmiths/mcp-yt-dlp) | Node.js 22 Alpine |
+| [`mcp-musicgen`](https://ghcr.io/vibesmiths/videoideas/mcp-musicgen) | [mcp-musicgen](https://github.com/VibeSmiths/mcp-musicgen) | PyTorch CUDA |
+| [`mcp-musicgen-rocm`](https://ghcr.io/vibesmiths/videoideas/mcp-musicgen-rocm) | [mcp-musicgen](https://github.com/VibeSmiths/mcp-musicgen) | PyTorch ROCm |
+| [`mcp-rvc`](https://ghcr.io/vibesmiths/videoideas/mcp-rvc) | [mcp-rvc](https://github.com/VibeSmiths/mcp-rvc) | CUDA |
+| [`mcp-rvc-rocm`](https://ghcr.io/vibesmiths/videoideas/mcp-rvc-rocm) | [mcp-rvc](https://github.com/VibeSmiths/mcp-rvc) | ROCm |
+
+```bash
+docker pull ghcr.io/vibesmiths/videoideas/studio:latest
+```
+
 ### Infrastructure
 
 | Repo | Description |
