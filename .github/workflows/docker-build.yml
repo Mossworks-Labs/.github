@@ -22,7 +22,7 @@ on:
       image-prefix:
         description: "Image prefix (org/repo)"
         type: string
-        default: "vibesmiths/videoideas"
+        default: "vibesmiths"
 
 permissions:
   contents: read
