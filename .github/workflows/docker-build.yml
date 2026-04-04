@@ -1,0 +1,71 @@
+name: Docker Build & Push
+
+on:
+  workflow_call:
+    inputs:
+      image-name:
+        description: "Image name (e.g., studio, mcp-storytelling)"
+        type: string
+        required: true
+      context:
+        description: "Docker build context"
+        type: string
+        default: "."
+      dockerfile:
+        description: "Dockerfile path"
+        type: string
+        default: "Dockerfile"
+      registry:
+        description: "Container registry"
+        type: string
+        default: "ghcr.io"
+      image-prefix:
+        description: "Image prefix (org/repo)"
+        type: string
+        default: "vibesmiths/videoideas"
+
+permissions:
+  contents: read
+  packages: write
+
+jobs:
+  build:
+    name: Build — ${{ inputs.image-name }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: docker/setup-buildx-action@v3
+
+      - uses: docker/login-action@v3
+        with:
+          registry: ${{ inputs.registry }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - uses: docker/metadata-action@v5
+        id: meta
+        with:
+          images: ${{ inputs.registry }}/${{ inputs.image-prefix }}/${{ inputs.image-name }}
+          tags: |
+            type=sha,prefix=
+            type=ref,event=branch
+            type=ref,event=pr
+            type=raw,value=latest,enable={{is_default_branch}}
+
+      - uses: docker/build-push-action@v6
+        with:
+          context: ${{ inputs.context }}
+          file: ${{ inputs.dockerfile }}
+          push: ${{ github.event_name == 'push' }}
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Summary
+        run: |
+          echo "### Docker — ${{ inputs.image-name }}" >> "$GITHUB_STEP_SUMMARY"
+          echo '```' >> "$GITHUB_STEP_SUMMARY"
+          echo "${{ steps.meta.outputs.tags }}" >> "$GITHUB_STEP_SUMMARY"
+          echo '```' >> "$GITHUB_STEP_SUMMARY"

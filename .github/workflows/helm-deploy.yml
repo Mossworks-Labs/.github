@@ -1,0 +1,63 @@
+name: Helm Deploy
+
+on:
+  workflow_call:
+    inputs:
+      release-name:
+        description: "Helm release name"
+        type: string
+        default: "craft"
+      chart-path:
+        description: "Path to Helm chart"
+        type: string
+        default: "./helm/craft"
+      values-file:
+        description: "Values file for deployment"
+        type: string
+        default: "helm/craft/values-dev.yaml"
+      image-prefix:
+        description: "GHCR image prefix"
+        type: string
+        default: "ghcr.io/vibesmiths/videoideas"
+      images:
+        description: "Space-separated list of image names to import"
+        type: string
+        default: "studio frontend"
+      containerd-socket:
+        description: "Path to containerd socket"
+        type: string
+        default: "/run/containerd/containerd.sock"
+
+jobs:
+  deploy:
+    name: Deploy
+    runs-on: self-hosted
+    environment: production
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Import images to k3s
+        run: |
+          TAG=$(git rev-parse --short HEAD)
+          for svc in ${{ inputs.images }}; do
+            echo "Importing $svc:$TAG..."
+            docker pull ${{ inputs.image-prefix }}/$svc:$TAG || true
+            docker save ${{ inputs.image-prefix }}/$svc:$TAG | \
+              sudo k3s ctr -a ${{ inputs.containerd-socket }} images import - 2>/dev/null || true
+          done
+
+      - name: Helm upgrade
+        run: |
+          TAG=$(git rev-parse --short HEAD)
+          sudo KUBECONFIG=/etc/rancher/k3s/k3s.yaml \
+            helm upgrade --install ${{ inputs.release-name }} ${{ inputs.chart-path }} \
+            -f ${{ inputs.values-file }} \
+            --set image.tag=$TAG \
+            --set global.hostname=${{ vars.DEPLOY_HOSTNAME }} \
+            --wait --timeout 5m
+
+      - name: Summary
+        run: |
+          TAG=$(git rev-parse --short HEAD)
+          echo "### Deploy" >> "$GITHUB_STEP_SUMMARY"
+          echo "Deployed \`$TAG\` to \`${{ vars.DEPLOY_HOSTNAME }}\`" >> "$GITHUB_STEP_SUMMARY"
