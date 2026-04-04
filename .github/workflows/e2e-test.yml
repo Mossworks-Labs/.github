@@ -1,0 +1,118 @@
+name: E2E / Screenshot Tests
+
+on:
+  workflow_call:
+    inputs:
+      test-type:
+        description: "Test type: e2e or screenshots"
+        type: string
+        required: true
+      frontend-service:
+        description: "Kubernetes frontend service name"
+        type: string
+        default: "svc/craft-frontend"
+      frontend-port:
+        description: "Frontend service port"
+        type: string
+        default: "3000"
+      working-directory:
+        description: "Working directory for test runner"
+        type: string
+        default: "."
+      test-command:
+        description: "Command to run tests"
+        type: string
+        default: "npx playwright test"
+      environment:
+        description: "GitHub environment (for secrets)"
+        type: string
+        default: "production"
+      commit-screenshots:
+        description: "Commit screenshot changes back to branch"
+        type: boolean
+        default: false
+    secrets:
+      KUBECONFIG_DATA:
+        description: "Base64-encoded kubeconfig for kubectl access"
+        required: true
+
+jobs:
+  test:
+    name: ${{ inputs.test-type }}
+    runs-on: self-hosted
+    environment: ${{ inputs.environment }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.head_ref || github.ref_name }}
+
+      - name: Configure kubectl
+        run: |
+          mkdir -p ~/.kube
+          echo "${{ secrets.KUBECONFIG_DATA }}" | base64 -d > ~/.kube/config
+          chmod 600 ~/.kube/config
+          kubectl get nodes --no-headers | head -1
+
+      - name: Port-forward frontend
+        run: |
+          kubectl port-forward ${{ inputs.frontend-service }} ${{ inputs.frontend-port }}:${{ inputs.frontend-port }} &
+          timeout 30 bash -c 'until curl -sf http://localhost:${{ inputs.frontend-port }} > /dev/null 2>&1; do sleep 2; done'
+          echo "Frontend available at http://localhost:${{ inputs.frontend-port }}"
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: ${{ inputs.working-directory }}/package-lock.json
+
+      - run: npm ci
+        working-directory: ${{ inputs.working-directory }}
+
+      - run: npx playwright install --with-deps chromium
+        working-directory: ${{ inputs.working-directory }}
+
+      - name: Run tests
+        run: ${{ inputs.test-command }}
+        working-directory: ${{ inputs.working-directory }}
+        env:
+          BASE_URL: http://localhost:${{ inputs.frontend-port }}
+          SCREENSHOT_URL: http://localhost:${{ inputs.frontend-port }}
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: ${{ inputs.test-type }}-results
+          path: |
+            ${{ inputs.working-directory }}/test-results/
+            ${{ inputs.working-directory }}/public/screenshots/
+          retention-days: 7
+
+      - name: Commit screenshots
+        if: inputs.commit-screenshots && success()
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add docs/public/screenshots/*.png 2>/dev/null || true
+          if git diff --staged --quiet; then
+            echo "No screenshot changes to commit"
+          else
+            git commit -m "docs: update screenshots [skip ci]"
+            git push
+          fi
+
+      - name: Cleanup
+        if: always()
+        run: |
+          kill $(lsof -t -i:${{ inputs.frontend-port }}) 2>/dev/null || true
+          rm -f ~/.kube/config
+
+      - name: Summary
+        if: always()
+        run: |
+          echo "### ${{ inputs.test-type }}" >> "$GITHUB_STEP_SUMMARY"
+          if [ "${{ inputs.test-type }}" = "screenshots" ]; then
+            count=$(find docs/public/screenshots -name '*.png' 2>/dev/null | wc -l)
+            echo "Captured **${count}** screenshots" >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "Tests completed against \`${{ inputs.frontend-service }}\`" >> "$GITHUB_STEP_SUMMARY"
+          fi
