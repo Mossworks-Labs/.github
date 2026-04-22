@@ -8,7 +8,7 @@
 
 **[CRAFT Studio](https://github.com/Mossworks-Labs/craft)** — The complete YouTube content studio. AI script writing, competitive research, 8-stage video pipeline with 14 AI agents, audio production with 300+ TTS voices, and Remotion-powered video rendering. Self-hosted on Kubernetes with Keycloak SSO.
 
-[Documentation](https://mossworks-labs.github.io/docs/) · [Live Demo Screenshots](https://mossworks-labs.github.io/docs/#feature-highlights)
+[Documentation](https://docs.mossworks.io/) · [Live Demo Screenshots](https://docs.mossworks.io/#feature-highlights)
 
 ### MCP Servers
 
@@ -49,7 +49,7 @@ docker pull ghcr.io/mossworks-labs/studio:latest
 |------|-------------|
 | [.github](https://github.com/Mossworks-Labs/.github) | Shared GitHub Actions — Docker build, Node.js lint/test, Helm deploy, CodeQL |
 | [baseline](https://github.com/Mossworks-Labs/baseline) | Helm chart for cluster baseline (cert-manager, external-dns) |
-| [docs](https://github.com/Mossworks-Labs/docs) | VitePress user guide — deploys to mossworks-labs.github.io/docs |
+| [docs](https://github.com/Mossworks-Labs/docs) | VitePress user guide — deploys to docs.mossworks.io |
 
 ---
 
