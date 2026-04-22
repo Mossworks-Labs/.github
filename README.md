@@ -1,6 +1,6 @@
-# VibeSmiths Shared CI/CD
+# Mossworks Labs Shared CI/CD
 
-Reusable GitHub Actions workflows and composite actions for VibeSmiths projects.
+Reusable GitHub Actions workflows and composite actions for Mossworks Labs projects.
 
 ## Reusable Workflows
 
@@ -10,7 +10,7 @@ Build and push Docker images to GHCR.
 ```yaml
 jobs:
   docker:
-    uses: VibeSmiths/.github/.github/workflows/docker-build.yml@main
+    uses: Mossworks-Labs/.github/.github/workflows/docker-build.yml@main
     with:
       image-name: my-service
       context: .
@@ -23,7 +23,7 @@ TypeScript lint + test for Node.js projects.
 ```yaml
 jobs:
   lint-test:
-    uses: VibeSmiths/.github/.github/workflows/node-lint-test.yml@main
+    uses: Mossworks-Labs/.github/.github/workflows/node-lint-test.yml@main
     with:
       node-version: "22"
 ```
@@ -34,7 +34,7 @@ Deploy to k3s via Helm (runs on self-hosted runner, gated by `production` enviro
 ```yaml
 jobs:
   deploy:
-    uses: VibeSmiths/.github/.github/workflows/helm-deploy.yml@main
+    uses: Mossworks-Labs/.github/.github/workflows/helm-deploy.yml@main
     with:
       release-name: craft
       chart-path: ./helm/craft
@@ -47,7 +47,7 @@ CodeQL static analysis (free for public repos).
 ```yaml
 jobs:
   codeql:
-    uses: VibeSmiths/.github/.github/workflows/codeql.yml@main
+    uses: Mossworks-Labs/.github/.github/workflows/codeql.yml@main
     with:
       languages: javascript
 ```
@@ -59,9 +59,9 @@ Dependency review on PRs — flags high-severity vulnerabilities in new dependen
 jobs:
   dependency-review:
     if: github.event_name == 'pull_request'
-    uses: VibeSmiths/.github/.github/workflows/dependency-review.yml@main
+    uses: Mossworks-Labs/.github/.github/workflows/dependency-review.yml@main
 ```
 
 ## Org Workflow Templates
 
-The `workflow-templates/security.yml` template is available to all VibeSmiths repos via **Actions > New workflow > VibeSmiths Security**.
+The `workflow-templates/security.yml` template is available to all Mossworks Labs repos via **Actions > New workflow > Mossworks Labs Security**.

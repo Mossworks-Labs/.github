@@ -1,4 +1,4 @@
-# VibeSmiths
+# Mossworks Labs
 
 **Open-source tools for content creators.** AI-powered video production, MCP servers for research, and the infrastructure to tie it all together.
 
@@ -6,52 +6,50 @@
 
 ### Flagship
 
-**[CRAFT Studio](https://github.com/VibeSmiths/VideoIdeas)** — The complete YouTube content studio. AI script writing, competitive research, 8-stage video pipeline with 14 AI agents, audio production with 300+ TTS voices, and Remotion-powered video rendering. Self-hosted on Kubernetes with Keycloak SSO.
+**[CRAFT Studio](https://github.com/Mossworks-Labs/craft)** — The complete YouTube content studio. AI script writing, competitive research, 8-stage video pipeline with 14 AI agents, audio production with 300+ TTS voices, and Remotion-powered video rendering. Self-hosted on Kubernetes with Keycloak SSO.
 
-[Documentation](https://vibesmiths.github.io/CRAFT/) · [Live Demo Screenshots](https://vibesmiths.github.io/CRAFT/#feature-highlights)
+[Documentation](https://mossworks-labs.github.io/docs/) · [Live Demo Screenshots](https://mossworks-labs.github.io/docs/#feature-highlights)
 
 ### MCP Servers
 
 | Server | Description |
 |--------|-------------|
-| [mcp-storytelling](https://github.com/VibeSmiths/mcp-storytelling) | Writing craft, narrative structure, and author perspectives |
-| [mcp-comedy](https://github.com/VibeSmiths/mcp-comedy) | History and psychology of humor — comedians, techniques, theories |
-| [mcp-yt-dlp](https://github.com/VibeSmiths/mcp-yt-dlp) | Video info, formats, subtitles, and download via yt-dlp |
-| [mcp-research-engine](https://github.com/VibeSmiths/mcp-research-engine) | Multi-source research aggregation |
+| [mcp-storytelling](https://github.com/Mossworks-Labs/mcp-storytelling) | Writing craft, narrative structure, and author perspectives |
+| [mcp-comedy](https://github.com/Mossworks-Labs/mcp-comedy) | History and psychology of humor — comedians, techniques, theories |
+| [mcp-yt-dlp](https://github.com/Mossworks-Labs/mcp-yt-dlp) | Video info, formats, subtitles, and download via yt-dlp |
+| [mcp-research-engine](https://github.com/Mossworks-Labs/mcp-research-engine) | Multi-source research aggregation |
 
 ### GPU Services
 
 | Service | Description |
 |---------|-------------|
-| [mcp-musicgen](https://github.com/VibeSmiths/mcp-musicgen) | Text-to-music generation (Meta AudioCraft) — CUDA + ROCm |
-| [mcp-rvc](https://github.com/VibeSmiths/mcp-rvc) | Voice cloning via Retrieval-based Voice Conversion — CUDA + ROCm |
+| [mcp-musicgen](https://github.com/Mossworks-Labs/mcp-musicgen) | Text-to-music generation (Meta AudioCraft) — CUDA + ROCm |
 
 ### Docker Packages
 
-All images published to GitHub Container Registry (`ghcr.io/vibesmiths`):
+All images published to GitHub Container Registry (`ghcr.io/mossworks-labs`):
 
 | Package | Source | Runtime |
 |---------|--------|---------|
-| [`studio`](https://ghcr.io/vibesmiths/studio) | [VideoIdeas](https://github.com/VibeSmiths/VideoIdeas) | Node.js 22 Alpine |
-| [`frontend`](https://ghcr.io/vibesmiths/frontend) | [VideoIdeas](https://github.com/VibeSmiths/VideoIdeas) | nginx |
-| [`mcp-storytelling`](https://ghcr.io/vibesmiths/mcp-storytelling) | [mcp-storytelling](https://github.com/VibeSmiths/mcp-storytelling) | Node.js 22 Alpine |
-| [`mcp-comedy`](https://ghcr.io/vibesmiths/mcp-comedy) | [mcp-comedy](https://github.com/VibeSmiths/mcp-comedy) | Node.js 22 Alpine |
-| [`mcp-yt-dlp`](https://ghcr.io/vibesmiths/mcp-yt-dlp) | [mcp-yt-dlp](https://github.com/VibeSmiths/mcp-yt-dlp) | Node.js 22 Alpine |
-| [`mcp-musicgen`](https://ghcr.io/vibesmiths/mcp-musicgen) | [mcp-musicgen](https://github.com/VibeSmiths/mcp-musicgen) | PyTorch CUDA |
-| [`mcp-musicgen-rocm`](https://ghcr.io/vibesmiths/mcp-musicgen-rocm) | [mcp-musicgen](https://github.com/VibeSmiths/mcp-musicgen) | PyTorch ROCm |
-| [`mcp-rvc`](https://ghcr.io/vibesmiths/mcp-rvc) | [mcp-rvc](https://github.com/VibeSmiths/mcp-rvc) | CUDA |
-| [`mcp-rvc-rocm`](https://ghcr.io/vibesmiths/mcp-rvc-rocm) | [mcp-rvc](https://github.com/VibeSmiths/mcp-rvc) | ROCm |
+| [`studio`](https://ghcr.io/mossworks-labs/studio) | [craft](https://github.com/Mossworks-Labs/craft) | Node.js 22 Alpine |
+| [`frontend`](https://ghcr.io/mossworks-labs/frontend) | [craft](https://github.com/Mossworks-Labs/craft) | nginx |
+| [`mcp-storytelling`](https://ghcr.io/mossworks-labs/mcp-storytelling) | [mcp-storytelling](https://github.com/Mossworks-Labs/mcp-storytelling) | Node.js 22 Alpine |
+| [`mcp-comedy`](https://ghcr.io/mossworks-labs/mcp-comedy) | [mcp-comedy](https://github.com/Mossworks-Labs/mcp-comedy) | Node.js 22 Alpine |
+| [`mcp-yt-dlp`](https://ghcr.io/mossworks-labs/mcp-yt-dlp) | [mcp-yt-dlp](https://github.com/Mossworks-Labs/mcp-yt-dlp) | Node.js 22 Alpine |
+| [`mcp-musicgen`](https://ghcr.io/mossworks-labs/mcp-musicgen) | [mcp-musicgen](https://github.com/Mossworks-Labs/mcp-musicgen) | PyTorch CUDA |
+| [`mcp-musicgen-rocm`](https://ghcr.io/mossworks-labs/mcp-musicgen-rocm) | [mcp-musicgen](https://github.com/Mossworks-Labs/mcp-musicgen) | PyTorch ROCm |
 
 ```bash
-docker pull ghcr.io/vibesmiths/studio:latest
+docker pull ghcr.io/mossworks-labs/studio:latest
 ```
 
 ### Infrastructure
 
 | Repo | Description |
 |------|-------------|
-| [.github](https://github.com/VibeSmiths/.github) | Shared GitHub Actions — Docker build, Node.js lint/test, Helm deploy, CodeQL |
-| [HeatSync](https://github.com/VibeSmiths/HeatSync) | Infrastructure and configuration management |
+| [.github](https://github.com/Mossworks-Labs/.github) | Shared GitHub Actions — Docker build, Node.js lint/test, Helm deploy, CodeQL |
+| [baseline](https://github.com/Mossworks-Labs/baseline) | Helm chart for cluster baseline (cert-manager, external-dns) |
+| [docs](https://github.com/Mossworks-Labs/docs) | VitePress user guide — deploys to mossworks-labs.github.io/docs |
 
 ---
 
