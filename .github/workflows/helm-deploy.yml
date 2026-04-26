@@ -31,6 +31,13 @@ on:
         description: "GitHub environment name (matches DNS hostname)"
         type: string
         default: "dev.local.rudolphhome.com"
+    secrets:
+      KUBECONFIG_DATA:
+        description: "Base64-encoded kubeconfig. If unset, falls back to /etc/rancher/k3s/k3s.yaml on the runner."
+        required: false
+      VALUES_FILE_DATA:
+        description: "Base64-encoded contents of the values file. If set, written to the values-file path before helm upgrade (gitignored values files live here)."
+        required: false
 
 jobs:
   deploy:
@@ -39,6 +46,26 @@ jobs:
     environment: ${{ inputs.environment }}
     steps:
       - uses: actions/checkout@v4
+
+      - name: Materialize kubeconfig
+        id: kubeconfig
+        run: |
+          if [ -n "${{ secrets.KUBECONFIG_DATA }}" ]; then
+            KCFG="$RUNNER_TEMP/kubeconfig"
+            echo "${{ secrets.KUBECONFIG_DATA }}" | base64 -d > "$KCFG"
+            chmod 600 "$KCFG"
+            echo "path=$KCFG" >> "$GITHUB_OUTPUT"
+            echo "needs_sudo=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "path=/etc/rancher/k3s/k3s.yaml" >> "$GITHUB_OUTPUT"
+            echo "needs_sudo=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Materialize values file
+        if: ${{ secrets.VALUES_FILE_DATA != '' }}
+        run: |
+          mkdir -p "$(dirname "${{ inputs.values-file }}")"
+          echo "${{ secrets.VALUES_FILE_DATA }}" | base64 -d > "${{ inputs.values-file }}"
 
       - name: Import images to k3s
         run: |
@@ -51,9 +78,17 @@ jobs:
           done
 
       - name: Helm upgrade
+        env:
+          KUBECONFIG_PATH: ${{ steps.kubeconfig.outputs.path }}
+          NEEDS_SUDO: ${{ steps.kubeconfig.outputs.needs_sudo }}
         run: |
           TAG=$(git rev-parse --short HEAD)
-          sudo KUBECONFIG=/etc/rancher/k3s/k3s.yaml \
+          if [ "$NEEDS_SUDO" = "true" ]; then
+            SUDO="sudo"
+          else
+            SUDO=""
+          fi
+          $SUDO env KUBECONFIG="$KUBECONFIG_PATH" \
             helm upgrade --install ${{ inputs.release-name }} ${{ inputs.chart-path }} \
             -f ${{ inputs.values-file }} \
             --set image.tag=$TAG \
