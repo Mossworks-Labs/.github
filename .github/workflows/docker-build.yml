@@ -27,6 +27,10 @@ on:
         description: "Whether source paths for this image changed. When false (and pushing to default branch) and :latest exists, the job pulls :latest and retags as :<sha> instead of rebuilding. If :latest is missing it falls back to a normal build so the deploy still finds the SHA tag."
         type: boolean
         default: true
+      runs-on:
+        description: "Runner label. Pass 'self-hosted' (or a custom label) to route the build to a self-hosted runner instead of GitHub-hosted ubuntu-latest."
+        type: string
+        default: "ubuntu-latest"
 
 permissions:
   contents: read
@@ -35,7 +39,7 @@ permissions:
 jobs:
   build:
     name: Build — ${{ inputs.image-name }}
-    runs-on: ubuntu-latest
+    runs-on: ${{ inputs.runs-on }}
     steps:
       - uses: actions/checkout@v4
 
