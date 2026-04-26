@@ -49,10 +49,12 @@ jobs:
 
       - name: Materialize kubeconfig
         id: kubeconfig
+        env:
+          KUBECONFIG_DATA: ${{ secrets.KUBECONFIG_DATA }}
         run: |
-          if [ -n "${{ secrets.KUBECONFIG_DATA }}" ]; then
+          if [ -n "$KUBECONFIG_DATA" ]; then
             KCFG="$RUNNER_TEMP/kubeconfig"
-            echo "${{ secrets.KUBECONFIG_DATA }}" | base64 -d > "$KCFG"
+            echo "$KUBECONFIG_DATA" | base64 -d > "$KCFG"
             chmod 600 "$KCFG"
             echo "path=$KCFG" >> "$GITHUB_OUTPUT"
             echo "needs_sudo=false" >> "$GITHUB_OUTPUT"
@@ -62,10 +64,13 @@ jobs:
           fi
 
       - name: Materialize values file
-        if: ${{ secrets.VALUES_FILE_DATA != '' }}
+        env:
+          VALUES_FILE_DATA: ${{ secrets.VALUES_FILE_DATA }}
         run: |
-          mkdir -p "$(dirname "${{ inputs.values-file }}")"
-          echo "${{ secrets.VALUES_FILE_DATA }}" | base64 -d > "${{ inputs.values-file }}"
+          if [ -n "$VALUES_FILE_DATA" ]; then
+            mkdir -p "$(dirname "${{ inputs.values-file }}")"
+            echo "$VALUES_FILE_DATA" | base64 -d > "${{ inputs.values-file }}"
+          fi
 
       - name: Import images to k3s
         run: |
