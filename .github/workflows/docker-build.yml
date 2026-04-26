@@ -24,7 +24,7 @@ on:
         type: string
         default: "vibesmiths"
       source-changed:
-        description: "Whether source paths for this image changed. When false (and pushing to default branch), the job pulls :latest and retags as :<sha> instead of rebuilding — :latest reflects the unchanged source so retagging is equivalent to a rebuild."
+        description: "Whether source paths for this image changed. When false (and pushing to default branch) and :latest exists, the job pulls :latest and retags as :<sha> instead of rebuilding. If :latest is missing it falls back to a normal build so the deploy still finds the SHA tag."
         type: boolean
         default: true
 
@@ -38,9 +38,6 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-
-      - uses: docker/setup-buildx-action@v3
-        if: inputs.source-changed
 
       - uses: docker/login-action@v3
         with:
@@ -58,8 +55,32 @@ jobs:
             type=ref,event=pr
             type=raw,value=latest,enable={{is_default_branch}}
 
+      - name: Decide mode (build vs retag)
+        id: mode
+        run: |
+          set -euo pipefail
+          IMAGE="${{ inputs.registry }}/${{ inputs.image-prefix }}/${{ inputs.image-name }}"
+          IS_PUSH="${{ github.event_name == 'push' || github.event_name == 'workflow_dispatch' }}"
+          if [ "${{ inputs.source-changed }}" = "true" ]; then
+            echo "mode=build" >> "$GITHUB_OUTPUT"
+            echo "Source changed — building."
+          elif [ "$IS_PUSH" != "true" ]; then
+            # PR runs never push; fall back to build (cache-from will keep it cheap).
+            echo "mode=build" >> "$GITHUB_OUTPUT"
+            echo "Non-push event — building (no retag for PRs)."
+          elif docker manifest inspect "$IMAGE:latest" >/dev/null 2>&1; then
+            echo "mode=retag" >> "$GITHUB_OUTPUT"
+            echo "Source unchanged and :latest exists — will retag."
+          else
+            echo "mode=build" >> "$GITHUB_OUTPUT"
+            echo "::warning::Source unchanged but :latest is missing for $IMAGE — falling back to build."
+          fi
+
+      - uses: docker/setup-buildx-action@v3
+        if: steps.mode.outputs.mode == 'build'
+
       - name: Build & push
-        if: inputs.source-changed
+        if: steps.mode.outputs.mode == 'build'
         uses: docker/build-push-action@v6
         with:
           context: ${{ inputs.context }}
@@ -70,22 +91,20 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
-      - name: Retag :latest as :<sha> (no source change)
-        if: ${{ !inputs.source-changed && (github.event_name == 'push' || github.event_name == 'workflow_dispatch') }}
+      - name: Retag :latest as :<sha>
+        if: steps.mode.outputs.mode == 'retag'
         run: |
           set -euo pipefail
           IMAGE="${{ inputs.registry }}/${{ inputs.image-prefix }}/${{ inputs.image-name }}"
           NEW_SHA="$(git rev-parse --short HEAD)"
-          echo "Retagging $IMAGE:latest as $IMAGE:$NEW_SHA (source unchanged)"
+          echo "Retagging $IMAGE:latest as $IMAGE:$NEW_SHA"
           docker pull "$IMAGE:latest"
           docker tag "$IMAGE:latest" "$IMAGE:$NEW_SHA"
           docker push "$IMAGE:$NEW_SHA"
 
       - name: Summary
         run: |
-          MODE="built"
-          if [ "${{ inputs.source-changed }}" = "false" ]; then MODE="retagged from :latest"; fi
-          echo "### Docker — ${{ inputs.image-name }} ($MODE)" >> "$GITHUB_STEP_SUMMARY"
+          echo "### Docker — ${{ inputs.image-name }} (${{ steps.mode.outputs.mode }})" >> "$GITHUB_STEP_SUMMARY"
           echo '```' >> "$GITHUB_STEP_SUMMARY"
           echo "${{ steps.meta.outputs.tags }}" >> "$GITHUB_STEP_SUMMARY"
           echo '```' >> "$GITHUB_STEP_SUMMARY"
