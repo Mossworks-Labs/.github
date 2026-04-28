@@ -32,7 +32,7 @@ on:
         type: string
         default: "ubuntu-latest"
       target:
-        description: "Build target stage (for multi-target Dockerfiles). Empty string means no --target (build the final stage)."
+        description: "Optional Dockerfile build target (named stage). Leave empty to build the final stage. Used when one Dockerfile produces multiple images via multi-stage targets."
         type: string
         default: ""
 
