@@ -31,6 +31,10 @@ on:
         description: "Runner label. Pass 'self-hosted' (or a custom label) to route the build to a self-hosted runner instead of GitHub-hosted ubuntu-latest."
         type: string
         default: "ubuntu-latest"
+      target:
+        description: "Optional Dockerfile build target (named stage). Leave empty to build the final stage. Used when one Dockerfile produces multiple images via multi-stage targets."
+        type: string
+        default: ""
 
 permissions:
   contents: read
@@ -89,6 +93,7 @@ jobs:
         with:
           context: ${{ inputs.context }}
           file: ${{ inputs.dockerfile }}
+          target: ${{ inputs.target }}
           push: ${{ github.event_name == 'push' || github.event_name == 'workflow_dispatch' }}
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
