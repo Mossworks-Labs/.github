@@ -8,9 +8,31 @@ on:
         type: string
         default: "craft"
       chart-path:
-        description: "Path to Helm chart"
+        description: |
+          Path to a local chart on disk. Used when `chart-repo` is empty
+          (legacy in-repo chart layout). Ignored when `chart-repo` is set.
         type: string
         default: "./helm/craft"
+      chart-repo:
+        description: |
+          Optional Helm chart repository URL. When set, the workflow runs
+          `helm repo add` + `helm repo update` against this URL and installs
+          `<alias>/<chart-name>` instead of a local path. Use this for charts
+          published to a registry (e.g. https://mossworks-labs.github.io/helm-charts/).
+        type: string
+        default: ""
+      chart-name:
+        description: |
+          Chart name within `chart-repo`. Defaults to `release-name`. Only
+          used when `chart-repo` is set.
+        type: string
+        default: ""
+      chart-version:
+        description: |
+          Optional chart version pin (e.g. "0.1.0"). Only used when
+          `chart-repo` is set. Empty = latest.
+        type: string
+        default: ""
       values-file:
         description: "Values file for deployment"
         type: string
@@ -82,10 +104,41 @@ jobs:
               sudo k3s ctr -a ${{ inputs.containerd-socket }} images import - 2>/dev/null || true
           done
 
+      - name: Resolve chart reference
+        id: chart
+        env:
+          CHART_REPO: ${{ inputs.chart-repo }}
+          CHART_NAME: ${{ inputs.chart-name }}
+          CHART_VERSION: ${{ inputs.chart-version }}
+          CHART_PATH: ${{ inputs.chart-path }}
+          RELEASE_NAME: ${{ inputs.release-name }}
+        run: |
+          if [ -n "$CHART_REPO" ]; then
+            # Registry mode: pull from a Helm chart repo URL
+            chart_name="${CHART_NAME:-$RELEASE_NAME}"
+            helm repo add helm-deploy-source "$CHART_REPO"
+            helm repo update helm-deploy-source
+            ref="helm-deploy-source/$chart_name"
+            version_flag=""
+            if [ -n "$CHART_VERSION" ]; then
+              version_flag="--version $CHART_VERSION"
+            fi
+            echo "ref=$ref" >> "$GITHUB_OUTPUT"
+            echo "version_flag=$version_flag" >> "$GITHUB_OUTPUT"
+            echo "Resolved chart: $ref ${version_flag:-(latest)}"
+          else
+            # Legacy local-path mode
+            echo "ref=$CHART_PATH" >> "$GITHUB_OUTPUT"
+            echo "version_flag=" >> "$GITHUB_OUTPUT"
+            echo "Resolved chart: $CHART_PATH (local)"
+          fi
+
       - name: Helm upgrade
         env:
           KUBECONFIG_PATH: ${{ steps.kubeconfig.outputs.path }}
           NEEDS_SUDO: ${{ steps.kubeconfig.outputs.needs_sudo }}
+          CHART_REF: ${{ steps.chart.outputs.ref }}
+          VERSION_FLAG: ${{ steps.chart.outputs.version_flag }}
         run: |
           TAG=$(git rev-parse --short HEAD)
           if [ "$NEEDS_SUDO" = "true" ]; then
@@ -94,7 +147,7 @@ jobs:
             SUDO=""
           fi
           $SUDO env KUBECONFIG="$KUBECONFIG_PATH" \
-            helm upgrade --install ${{ inputs.release-name }} ${{ inputs.chart-path }} \
+            helm upgrade --install ${{ inputs.release-name }} "$CHART_REF" $VERSION_FLAG \
             -f ${{ inputs.values-file }} \
             --set image.tag=$TAG \
             --set global.hostname=${{ vars.DEPLOY_HOSTNAME }} \
