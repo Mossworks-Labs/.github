@@ -1,0 +1,4 @@
+# Default reviewer for everything in this repo. The `dev` team is the
+# org-wide review group; individual repos may add their own granular
+# CODEOWNERS that override these defaults.
+* @Mossworks-Labs/dev

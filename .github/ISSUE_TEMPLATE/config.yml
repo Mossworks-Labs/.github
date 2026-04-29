@@ -1,0 +1,11 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Documentation
+    url: https://docs.mossworks.io/
+    about: User guides, architecture notes, and feature references for CRAFT Studio.
+  - name: Security vulnerability
+    url: https://github.com/Mossworks-Labs/.github/blob/main/SECURITY.md
+    about: Don't open a public issue — use private vulnerability reporting.
+  - name: Question / how-to
+    url: https://github.com/orgs/Mossworks-Labs/discussions
+    about: Open-ended questions belong in Discussions, not issues.

@@ -1,0 +1,63 @@
+name: Bug report
+description: Something is broken or behaving unexpectedly.
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to report this. Fill in what you can — the more concrete the reproduction, the faster we can fix it.
+
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened?
+      description: Describe the actual behaviour you saw.
+      placeholder: When I clicked X, the screen showed Y but I expected Z.
+    validations:
+      required: true
+
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Reproduction steps
+      description: Numbered list of what you did. Include URLs, commands, or sample inputs if relevant.
+      placeholder: |
+        1. Open …
+        2. Click …
+        3. Observe …
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behaviour
+      description: What did you expect to happen instead?
+    validations:
+      required: true
+
+  - type: input
+    id: version
+    attributes:
+      label: Version / commit
+      description: Tag, commit SHA, or `helm list` chart version. `unknown` is OK if you can't tell.
+      placeholder: e.g. craft-0.2.0, commit abcd123
+    validations:
+      required: true
+
+  - type: textarea
+    id: environment
+    attributes:
+      label: Environment
+      description: OS, browser, kubectl version, anything that might matter. Optional.
+      placeholder: |
+        - OS: …
+        - Browser / kubectl / docker: …
+        - Self-hosted / hosted instance: …
+
+  - type: textarea
+    id: logs
+    attributes:
+      label: Logs / screenshots
+      description: Paste relevant logs (in code blocks) or attach screenshots. Redact anything sensitive.
+      render: shell

@@ -1,0 +1,37 @@
+name: Feature request
+description: Propose a new capability or a behavioural change.
+labels: ["enhancement"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Lead with the user-visible problem before the proposed solution — that lets us evaluate alternatives and avoid building the wrong thing.
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: What's the problem?
+      description: Describe the user-visible pain point or unmet need.
+      placeholder: As a creator I can't … which means I have to …
+    validations:
+      required: true
+
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed solution
+      description: How would you like it to work? Sketches, API shapes, or screenshots welcome.
+    validations:
+      required: true
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered
+      description: Anything else you tried or thought about and why it didn't fit.
+
+  - type: textarea
+    id: scope
+    attributes:
+      label: Scope notes
+      description: Optional — known constraints, related issues, willingness to contribute a PR.
