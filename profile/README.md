@@ -1,56 +1,42 @@
 # Mossworks Labs
 
-**Open-source tools for content creators.** AI-powered video production, MCP servers for research, and the infrastructure to tie it all together.
+**Tools and infrastructure for AI-assisted content production.** A self-hosted YouTube studio, a creator-services marketplace, and a set of open-source MCP servers that bring research, writing craft, and media tooling into Claude.
 
 ---
 
-### Flagship
+### Open source
 
-**[CRAFT Studio](https://github.com/Mossworks-Labs/craft)** — The complete YouTube content studio. AI script writing, competitive research, 8-stage video pipeline with 14 AI agents, audio production with 300+ TTS voices, and Remotion-powered video rendering. Self-hosted on Kubernetes with Keycloak SSO.
+MCP (Model Context Protocol) servers — drop-in skill packs for Claude Code, Claude Desktop, or any MCP-aware client.
 
-[Documentation](https://docs.mossworks.io/) · [Live Demo Screenshots](https://docs.mossworks.io/#feature-highlights)
-
-### MCP Servers
-
-| Server | Description |
-|--------|-------------|
+| Server | What it does |
+|--------|--------------|
 | [mcp-storytelling](https://github.com/Mossworks-Labs/mcp-storytelling) | Writing craft, narrative structure, and author perspectives |
-| [mcp-comedy](https://github.com/Mossworks-Labs/mcp-comedy) | History and psychology of humor — comedians, techniques, theories |
-| [mcp-yt-dlp](https://github.com/Mossworks-Labs/mcp-yt-dlp) | Video info, formats, subtitles, and download via yt-dlp |
-| [mcp-research-engine](https://github.com/Mossworks-Labs/mcp-research-engine) | Multi-source research aggregation |
-
-### GPU Services
-
-| Service | Description |
-|---------|-------------|
-| [mcp-musicgen](https://github.com/Mossworks-Labs/mcp-musicgen) | Text-to-music generation (Meta AudioCraft) — CUDA + ROCm |
-
-### Docker Packages
-
-All images published to GitHub Container Registry (`ghcr.io/mossworks-labs`):
-
-| Package | Source | Runtime |
-|---------|--------|---------|
-| [`studio`](https://ghcr.io/mossworks-labs/studio) | [craft](https://github.com/Mossworks-Labs/craft) | Node.js 22 Alpine |
-| [`frontend`](https://ghcr.io/mossworks-labs/frontend) | [craft](https://github.com/Mossworks-Labs/craft) | nginx |
-| [`mcp-storytelling`](https://ghcr.io/mossworks-labs/mcp-storytelling) | [mcp-storytelling](https://github.com/Mossworks-Labs/mcp-storytelling) | Node.js 22 Alpine |
-| [`mcp-comedy`](https://ghcr.io/mossworks-labs/mcp-comedy) | [mcp-comedy](https://github.com/Mossworks-Labs/mcp-comedy) | Node.js 22 Alpine |
-| [`mcp-yt-dlp`](https://ghcr.io/mossworks-labs/mcp-yt-dlp) | [mcp-yt-dlp](https://github.com/Mossworks-Labs/mcp-yt-dlp) | Node.js 22 Alpine |
-| [`mcp-musicgen`](https://ghcr.io/mossworks-labs/mcp-musicgen) | [mcp-musicgen](https://github.com/Mossworks-Labs/mcp-musicgen) | PyTorch CUDA |
-| [`mcp-musicgen-rocm`](https://ghcr.io/mossworks-labs/mcp-musicgen-rocm) | [mcp-musicgen](https://github.com/Mossworks-Labs/mcp-musicgen) | PyTorch ROCm |
+| [mcp-comedy](https://github.com/Mossworks-Labs/mcp-comedy) | Comedy theory, technique, and comedian knowledge |
+| [mcp-yt-dlp](https://github.com/Mossworks-Labs/mcp-yt-dlp) | YouTube video info, formats, subtitles, and download via yt-dlp |
+| [mcp-musicgen](https://github.com/Mossworks-Labs/mcp-musicgen) | Text-to-music generation via Meta AudioCraft (CUDA + ROCm) — runs as a GPU service, not a stdio server |
 
 ```bash
-docker pull ghcr.io/mossworks-labs/studio:latest
+docker pull ghcr.io/mossworks-labs/mcp-storytelling:latest
 ```
 
-### Infrastructure
+[Documentation site](https://docs.mossworks.io/) — usage guides, architecture notes, and screenshots.
 
-| Repo | Description |
-|------|-------------|
-| [.github](https://github.com/Mossworks-Labs/.github) | Shared GitHub Actions — Docker build, Node.js lint/test, Helm deploy, CodeQL |
-| [baseline](https://github.com/Mossworks-Labs/baseline) | Helm chart for cluster baseline (cert-manager, external-dns) |
-| [docs](https://github.com/Mossworks-Labs/docs) | VitePress user guide — deploys to docs.mossworks.io |
+### Platform
+
+Source repositories are private; deployable Helm charts and container images are published for licensed deployments.
+
+- **[CRAFT Studio](https://github.com/Mossworks-Labs/craft)** — the flagship content studio. AI script writing, competitive research, multi-stage video pipeline, audio production with 300+ TTS voices, NLLB-200 self-hosted translation, and ffmpeg-based composition. Multi-tenant via Keycloak SSO.
+- **[Marketplace](https://github.com/Mossworks-Labs/marketplace)** — creator-services marketplace. Flat 15% buyer fee, $0 seller fees, Stripe Connect Express escrow, transparent storage pass-through.
+- **[helm-charts](https://github.com/Mossworks-Labs/helm-charts)** — monorepo for the `craft`, `gpu`, `baseline`, and `marketplace` Helm charts. Versions managed by release-please; packages published to gh-pages via chart-releaser.
+- **[platform-deploy](https://github.com/Mossworks-Labs/platform-deploy)** — Pulumi program that installs CRAFT + the platform's dependencies (cert-manager, Keycloak, Cloudflare Tunnel) onto any Kubernetes cluster.
+
+### Shared infrastructure
+
+| Repo | Purpose |
+|------|---------|
+| [.github](https://github.com/Mossworks-Labs/.github) | Reusable GitHub Actions workflows + composite actions (Docker build, Node lint/test, Helm deploy, CodeQL) |
+| [docs](https://github.com/Mossworks-Labs/docs) | VitePress site that builds [docs.mossworks.io](https://docs.mossworks.io/) |
 
 ---
 
-<sub>Built with TypeScript, React, Express, Helm, PostgreSQL, NATS, Redis, Remotion, Claude, Gemini, and Ollama.</sub>
+<sub>Built with TypeScript, React, Express, Helm, PostgreSQL, NATS, Redis, ffmpeg, Claude, Gemini, Ollama, and NLLB-200.</sub>
