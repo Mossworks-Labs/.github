@@ -24,7 +24,7 @@ on:
         type: string
         default: "vibesmiths"
       source-changed:
-        description: "Whether source paths for this image changed. When false (and pushing to default branch) and :latest exists, the job pulls :latest and retags as :<sha> instead of rebuilding. If :latest is missing it falls back to a normal build so the deploy still finds the SHA tag."
+        description: "Whether source paths for this image changed. When false (and pushing on a branch) and :latest exists, the job pulls :latest and retags it with every tag metadata-action would have applied (`:<sha>`, `:<branch>`, and `:latest` on the default branch) instead of rebuilding. If :latest is missing it falls back to a normal build so the deploy still finds the SHA tag."
         type: boolean
         default: true
       runs-on:
@@ -100,16 +100,27 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max,ignore-error=true
 
-      - name: Retag :latest as :<sha>
+      - name: Retag :latest as every metadata tag
         if: steps.mode.outputs.mode == 'retag'
+        env:
+          META_TAGS: ${{ steps.meta.outputs.tags }}
         run: |
           set -euo pipefail
           IMAGE="${{ inputs.registry }}/${{ inputs.image-prefix }}/${{ inputs.image-name }}"
-          NEW_SHA="$(git rev-parse --short HEAD)"
-          echo "Retagging $IMAGE:latest as $IMAGE:$NEW_SHA"
+          # Pull the source image we'll re-tag.
           docker pull "$IMAGE:latest"
-          docker tag "$IMAGE:latest" "$IMAGE:$NEW_SHA"
-          docker push "$IMAGE:$NEW_SHA"
+          # docker/metadata-action emits each `image:tag` ref on its own line.
+          # Apply every one — typically `:<sha>`, `:<branch>`, and `:latest`
+          # on the default branch. The `:latest` self-tag is a harmless no-op.
+          # This keeps :main / :latest in lockstep with :<sha> for services
+          # whose source didn't change in this push (otherwise :main would
+          # rot at whatever the last source-changed build produced).
+          while IFS= read -r ref; do
+            [ -z "$ref" ] && continue
+            echo "Tagging $ref"
+            docker tag "$IMAGE:latest" "$ref"
+            docker push "$ref"
+          done <<< "$META_TAGS"
 
       - name: Summary
         run: |
