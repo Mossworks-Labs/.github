@@ -35,6 +35,14 @@ on:
         description: "Optional Dockerfile build target (named stage). Leave empty to build the final stage. Used when one Dockerfile produces multiple images via multi-stage targets."
         type: string
         default: ""
+      build-args:
+        description: "Newline-separated list of `KEY=VALUE` build args to forward to docker build. Use sparingly — anything sensitive belongs in `secrets` (BuildKit secrets) instead, since build-args land in image history. Example use: passing VITE_API_BASE_URL into a frontend SPA build."
+        type: string
+        default: ""
+    secrets:
+      build-secrets:
+        description: "Newline-separated list of `KEY=VALUE` BuildKit secrets to forward to docker build. Mounted via `--mount=type=secret,id=KEY` in the Dockerfile so the value never lands in image layers or history. Use this for npm/registry tokens needed to install private deps at build time (e.g. NODE_AUTH_TOKEN for @mossworks-labs scoped packages from GitHub Packages)."
+        required: false
 
 permissions:
   contents: read
@@ -97,6 +105,8 @@ jobs:
           push: ${{ github.event_name == 'push' || github.event_name == 'workflow_dispatch' }}
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
+          build-args: ${{ inputs.build-args }}
+          secrets: ${{ secrets.build-secrets }}
           cache-from: type=gha
           cache-to: type=gha,mode=max,ignore-error=true
 
