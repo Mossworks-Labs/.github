@@ -31,6 +31,14 @@ on:
         description: "Commit screenshot changes back to branch"
         type: boolean
         default: false
+      runs-on:
+        description: |
+          Runner labels as a JSON-encoded string — pass `'"self-hosted"'`
+          for a single label or `'["self-hosted","dev"]'` to require all
+          labels in the array. Default targets self-hosted (cluster-side
+          runner that can port-forward to the in-cluster frontend).
+        type: string
+        default: '"self-hosted"'
     secrets:
       KUBECONFIG_DATA:
         description: "Base64-encoded kubeconfig for kubectl access"
@@ -39,7 +47,7 @@ on:
 jobs:
   test:
     name: ${{ inputs.test-type }}
-    runs-on: self-hosted
+    runs-on: ${{ fromJSON(inputs.runs-on) }}
     environment: ${{ inputs.environment }}
     steps:
       - uses: actions/checkout@v6

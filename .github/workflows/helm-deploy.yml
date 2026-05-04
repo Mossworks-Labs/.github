@@ -55,14 +55,16 @@ on:
         default: "dev.local.rudolphhome.com"
       runs-on:
         description: |
-          Runner label. Default `self-hosted` (k3s-bearing runner with
-          /etc/rancher/k3s/k3s.yaml + a containerd socket). Pass
-          `ubuntu-latest` (or another hosted label) to run from GitHub-
-          hosted infra; the Import-images-to-k3s step is auto-skipped
-          when this isn't `self-hosted` (the cluster will pull from the
-          registry instead). KUBECONFIG_DATA is required when off-cluster.
+          Runner labels as a JSON-encoded string — pass `'"self-hosted"'`
+          for a single label or `'["self-hosted","dev"]'` to require all
+          labels in the array. Default targets self-hosted (k3s-bearing
+          runner with /etc/rancher/k3s/k3s.yaml + a containerd socket).
+          Pass a hosted label (e.g. `'"ubuntu-latest"'`) to run from
+          GitHub-hosted infra; the Import-images-to-k3s step is auto-
+          skipped when not on a self-hosted runner. KUBECONFIG_DATA is
+          required when off-cluster.
         type: string
-        default: "self-hosted"
+        default: '"self-hosted"'
     secrets:
       KUBECONFIG_DATA:
         description: "Base64-encoded kubeconfig. If unset, falls back to /etc/rancher/k3s/k3s.yaml on the runner."
@@ -74,7 +76,7 @@ on:
 jobs:
   deploy:
     name: Deploy
-    runs-on: ${{ inputs.runs-on }}
+    runs-on: ${{ fromJSON(inputs.runs-on) }}
     environment: ${{ inputs.environment }}
     steps:
       - uses: actions/checkout@v6
@@ -109,7 +111,7 @@ jobs:
         # k3s containerd so kubelet doesn't have to pull from ghcr after
         # the helm upgrade. On hosted runners there's no local k3s, so
         # the cluster pulls from the registry the normal way.
-        if: ${{ inputs.runs-on == 'self-hosted' }}
+        if: ${{ contains(fromJSON(inputs.runs-on), 'self-hosted') }}
         run: |
           TAG=$(git rev-parse --short HEAD)
           for svc in ${{ inputs.images }}; do
