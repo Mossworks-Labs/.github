@@ -86,13 +86,18 @@ jobs:
     steps:
       - uses: actions/checkout@v6
 
-      - name: Ensure yq is available
+      - name: Check yq is on PATH
         shell: bash
         run: |
+          set -euo pipefail
+          # yq is expected to be preinstalled on the runner. GitHub-hosted
+          # ubuntu-latest ships with mikefarah/yq; the org's `mossworks-labs`
+          # self-hosted runners install it via their provisioning. If you
+          # see this fail, fix the runner — don't install yq inside the
+          # workflow.
           if ! command -v yq >/dev/null 2>&1; then
-            sudo wget -qO /usr/local/bin/yq \
-              https://github.com/mikefarah/yq/releases/download/v4.45.1/yq_linux_amd64
-            sudo chmod +x /usr/local/bin/yq
+            echo "::error::yq not found on the runner. The org's runners must have mikefarah/yq preinstalled — see runner provisioning docs." >&2
+            exit 1
           fi
           yq --version
 
