@@ -1,0 +1,110 @@
+name: Apply Org Repo Settings
+
+# Codifies the org-wide base settings applied to every Mossworks-Labs
+# repository (merge methods, default features, branch hygiene). The
+# JSON at `.github/repo-settings.json` is the source of truth — on push
+# to main, this workflow PATCHes every active repo with the `settings`
+# block. Repos in `exclude_repos` are skipped; archived repos are
+# skipped automatically.
+#
+# Drift handling: the API call is idempotent. Running again on already-
+# matching state is a no-op. To revert a setting, edit the JSON and
+# re-merge.
+#
+# Required: a repository secret `ORG_RULESET_TOKEN` (reused from the
+# rulesets workflow) with **Administration: Read and write** at both
+# the org level (for the rulesets workflow) AND on all repositories
+# (for this workflow's PATCH /repos/{owner}/{repo} calls).
+#
+# See docs/repo-settings.md for the schema reference + setup notes.
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/repo-settings.json'
+      - '.github/workflows/apply-repo-settings.yml'
+      - '.github/scripts/apply-repo-settings.sh'
+  pull_request:
+    branches: [main]
+    paths:
+      - '.github/repo-settings.json'
+      - '.github/workflows/apply-repo-settings.yml'
+      - '.github/scripts/apply-repo-settings.sh'
+  workflow_dispatch:
+    inputs:
+      dry-run:
+        description: "Show which repos would be patched without applying changes"
+        type: boolean
+        default: true
+
+permissions:
+  contents: read
+
+concurrency:
+  group: apply-repo-settings
+  cancel-in-progress: false
+
+jobs:
+  validate:
+    name: Validate repo-settings.json
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - name: Schema-shape sanity check
+        shell: bash
+        run: |
+          set -euo pipefail
+          f=.github/repo-settings.json
+          if [ ! -f "$f" ]; then
+            echo "::error::missing $f"
+            exit 1
+          fi
+          jq empty "$f"
+          jq -e '.settings | type == "object"' "$f" > /dev/null \
+            || { echo "::error::missing or non-object 'settings' block"; exit 1; }
+          # Soft-validate keys against the documented set of repo-settings the
+          # PATCH /repos/{owner}/{repo} endpoint accepts. Unknown keys are
+          # tolerated by the API (silently ignored), but flag them so a typo
+          # doesn't go unnoticed.
+          known='["has_issues","has_projects","has_wiki","has_discussions","is_template","default_branch","description","homepage","private","visibility","allow_merge_commit","allow_squash_merge","allow_rebase_merge","allow_auto_merge","allow_update_branch","delete_branch_on_merge","squash_merge_commit_title","squash_merge_commit_message","merge_commit_title","merge_commit_message","web_commit_signoff_required","archived","allow_forking"]'
+          unknown=$(jq -r --argjson k "$known" '.settings | keys - $k | .[]' "$f")
+          if [ -n "$unknown" ]; then
+            echo "::warning::unknown settings keys (typo? api will silently ignore): $unknown"
+          fi
+          echo "ok"
+
+  diff:
+    name: Diff (dry-run)
+    needs: validate
+    if: github.event_name == 'pull_request' || (github.event_name == 'workflow_dispatch' && inputs.dry-run)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - name: Dry-run
+        env:
+          GH_TOKEN: ${{ secrets.ORG_RULESET_TOKEN }}
+        run: |
+          if [ -z "${GH_TOKEN:-}" ]; then
+            echo "::warning::ORG_RULESET_TOKEN not set — skipping live dry-run."
+            echo "(Set the secret with org admin scope to enable repo-list output here.)"
+            exit 0
+          fi
+          .github/scripts/apply-repo-settings.sh Mossworks-Labs .github/repo-settings.json --dry-run
+
+  apply:
+    name: Apply
+    needs: validate
+    if: github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && inputs.dry-run == false)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - name: Apply repo settings
+        env:
+          GH_TOKEN: ${{ secrets.ORG_RULESET_TOKEN }}
+        run: |
+          if [ -z "${GH_TOKEN:-}" ]; then
+            echo "::error::ORG_RULESET_TOKEN secret is not set — cannot apply"
+            exit 1
+          fi
+          .github/scripts/apply-repo-settings.sh Mossworks-Labs .github/repo-settings.json

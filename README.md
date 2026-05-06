@@ -96,3 +96,14 @@ them to `Mossworks-Labs` on push to main.
 
 See [docs/rulesets.md](docs/rulesets.md) for the schema, bootstrap, and the
 required `ORG_RULESET_TOKEN` secret.
+
+## Repo Settings as Code
+
+Org-wide base repo settings (merge methods, default features, branch hygiene)
+live in `.github/repo-settings.json`. A workflow at
+`.github/workflows/apply-repo-settings.yml` PATCHes every active repo on push
+to main. Reuses the same `ORG_RULESET_TOKEN` secret (which needs both
+org-level and repo-level Administration: write).
+
+See [docs/repo-settings.md](docs/repo-settings.md) for the schema + the
+canonical settings table.

@@ -1,0 +1,19 @@
+{
+  "$schema-comment": "Codified base settings applied to every Mossworks-Labs repo by .github/workflows/apply-repo-settings.yml. PATCH /repos/{owner}/{repo} accepts the keys in `settings`. To change behaviour for the whole org, edit + open a PR; the change applies on push to main. Per-repo overrides should be rare — add an entry to `exclude_repos` for repos that need to deviate.",
+  "settings": {
+    "has_issues": true,
+    "has_projects": false,
+    "has_wiki": false,
+    "has_discussions": false,
+    "is_template": false,
+    "allow_merge_commit": false,
+    "allow_squash_merge": false,
+    "allow_rebase_merge": true,
+    "allow_auto_merge": true,
+    "allow_update_branch": true,
+    "delete_branch_on_merge": true,
+    "web_commit_signoff_required": false
+  },
+  "exclude_repos": [],
+  "exclude_archived": true
+}
