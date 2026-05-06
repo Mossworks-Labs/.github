@@ -1,0 +1,35 @@
+name: PR
+
+# Self-trampoline. Other repos in the org each have a
+# `.github/workflows/pr.yml` that calls this repo's reusable workflow;
+# this file is the equivalent for the .github repo itself, where the
+# universal workflow lives next door at `pr.yml` and can't double as
+# the trampoline.
+#
+# Why a separate file: the org ruleset requires a check named
+# `validation / PR / aggregate`, which only appears when the universal
+# workflow runs via `workflow_call` (the API check name format for
+# reusable-workflow jobs is `<calling-job> / <called-job>`). A direct
+# `pull_request` trigger on the universal workflow would produce just
+# `PR / aggregate`, missing the `validation /` prefix.
+#
+# `uses: ./.github/workflows/pr.yml` resolves to the PR's own version
+# of the universal workflow, so changes to pr.yml are validated by
+# pr.yml itself on every PR.
+
+on:
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+  packages: read
+
+jobs:
+  validation:
+    uses: ./.github/workflows/pr.yml
+    permissions:
+      contents: read
+      packages: read
+    secrets:
+      NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
