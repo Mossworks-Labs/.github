@@ -173,7 +173,9 @@ pulumi:
 
 The trampoline must pass `PULUMI_ACCESS_TOKEN`.
 
-## Org ruleset (one-time setup)
+## Org ruleset
+
+The org's "main" ruleset is codified at `.github/rulesets/main.json` and applied automatically on push to main — see [docs/rulesets.md](rulesets.md). It currently uses **Option 2** below (required workflow injection — `pr.yml` is auto-injected on every PR). Edit the JSON file and open a PR to change behaviour.
 
 Two enforcement options — pick **one** to avoid duplicate runs:
 
