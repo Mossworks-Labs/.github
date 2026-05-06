@@ -10,7 +10,10 @@
       ]
     },
     "repository_name": {
-      "exclude": [],
+      "exclude": [
+        "craft",
+        "bryo"
+      ],
       "include": [
         "~ALL"
       ]
@@ -41,14 +44,13 @@
       }
     },
     {
-      "type": "workflows",
+      "type": "required_status_checks",
       "parameters": {
-        "do_not_enforce_on_create": false,
-        "workflows": [
+        "do_not_enforce_on_create": true,
+        "strict_required_status_checks_policy": false,
+        "required_status_checks": [
           {
-            "repository_id": 1201289368,
-            "path": ".github/workflows/pr.yml",
-            "ref": "refs/heads/main"
+            "context": "validation / PR / aggregate"
           }
         ]
       }
