@@ -15,17 +15,18 @@ name: validation
 #   https://github.com/Mossworks-Labs/.github/blob/main/docs/pr-validation.md
 
 on:
-  # Two trigger modes:
-  #   1. workflow_call — invoked by per-repo trampolines. Trampoline can
-  #      pass repo-specific secrets (NODE_AUTH_TOKEN, build-secrets,
-  #      PULUMI_ACCESS_TOKEN) and override runs-on/node-version.
-  #   2. pull_request — eligible to be set as an org-level required
-  #      workflow via repository ruleset (GitHub requires one of
-  #      pull_request / pull_request_target / merge_queue for that). When
-  #      injected this way, inputs use defaults and only the repo's own
-  #      `secrets.GITHUB_TOKEN` is available — repos that need the docker
-  #      or pulumi-preview checks must add a trampoline so the relevant
-  #      secrets can flow through.
+  # workflow_call only — invoked by per-repo trampolines (including
+  # this repo's own .github/workflows/pr-self-validate.yml). The
+  # trampoline can pass repo-specific secrets (NODE_AUTH_TOKEN,
+  # build-secrets, PULUMI_ACCESS_TOKEN) and override
+  # runs-on/node-version.
+  #
+  # The org ruleset enforces the trampoline-style check name
+  # (`validation / PR / aggregate`). Triggering this workflow directly
+  # via `pull_request` would produce a different check name (just
+  # `PR / aggregate`, because for top-level workflow runs the API
+  # check name is the job name without the workflow name prefix), so
+  # the required check would never match. Self-trampoline instead.
   workflow_call:
     inputs:
       runs-on:
@@ -50,8 +51,6 @@ on:
       PULUMI_ACCESS_TOKEN:
         description: "Pulumi Cloud access token for the pulumi-preview check. Required when `checks.pulumi-preview` is true."
         required: false
-  pull_request:
-    branches: [main]
 
 permissions:
   contents: read
