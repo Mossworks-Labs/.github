@@ -63,7 +63,7 @@ jobs:
   # Missing or empty values fall back to the documented defaults.
   parse-config:
     name: PR / parse-config
-    runs-on: ${{ inputs.runs-on }}
+    runs-on: ${{ inputs.runs-on || 'ubuntu-latest' }}
     outputs:
       lint-enabled: ${{ steps.cfg.outputs.lint-enabled }}
       typecheck-enabled: ${{ steps.cfg.outputs.typecheck-enabled }}
@@ -120,13 +120,23 @@ jobs:
             printf '%s' "$out"
           }
 
-          # Standard Node/TS checks default to true.
+          # Standard Node/TS checks default to true — but only when a
+          # package.json + package-lock.json are actually present. The
+          # workflow runs on non-Node repos too (the .github org repo,
+          # helm-charts) where `npm ci` would fail; auto-detect so those
+          # repos don't need to disable each check explicitly.
+          npm_default='true'
+          working_dir="$(v '.working-directory' '.')"
+          if [ ! -f "${working_dir}/package.json" ] || [ ! -f "${working_dir}/package-lock.json" ]; then
+            npm_default='false'
+            echo "No package.json/package-lock.json in ${working_dir} — npm-based checks default off."
+          fi
           {
-            printf 'lint-enabled=%s\n'         "$(v '.checks.lint'         'true')"
-            printf 'typecheck-enabled=%s\n'    "$(v '.checks.typecheck'    'true')"
-            printf 'format-check-enabled=%s\n' "$(v '.checks.format-check' 'true')"
-            printf 'build-enabled=%s\n'        "$(v '.checks.build'        'true')"
-            printf 'test-enabled=%s\n'         "$(v '.checks.test'         'true')"
+            printf 'lint-enabled=%s\n'         "$(v '.checks.lint'         "$npm_default")"
+            printf 'typecheck-enabled=%s\n'    "$(v '.checks.typecheck'    "$npm_default")"
+            printf 'format-check-enabled=%s\n' "$(v '.checks.format-check' "$npm_default")"
+            printf 'build-enabled=%s\n'        "$(v '.checks.build'        "$npm_default")"
+            printf 'test-enabled=%s\n'         "$(v '.checks.test'         "$npm_default")"
             # Optional checks default to false; opt in via per-repo config.
             printf 'docker-enabled=%s\n'         "$(v '.checks.docker'         'false')"
             printf 'helm-lint-enabled=%s\n'      "$(v '.checks.helm-lint'      'false')"
@@ -176,17 +186,17 @@ jobs:
     name: PR / Lint
     needs: parse-config
     if: needs.parse-config.outputs.lint-enabled == 'true'
-    runs-on: ${{ inputs.runs-on }}
+    runs-on: ${{ inputs.runs-on || 'ubuntu-latest' }}
     defaults:
       run:
-        working-directory: ${{ inputs.working-directory }}
+        working-directory: ${{ inputs.working-directory || '.' }}
     steps:
       - uses: actions/checkout@v6
       - uses: actions/setup-node@v6
         with:
-          node-version: ${{ inputs.node-version }}
+          node-version: ${{ inputs.node-version || '22' }}
           cache: npm
-          cache-dependency-path: ${{ inputs.working-directory }}/package-lock.json
+          cache-dependency-path: ${{ inputs.working-directory || '.' }}/package-lock.json
           registry-url: 'https://npm.pkg.github.com'
           scope: '@mossworks-labs'
       - run: npm ci
@@ -198,17 +208,17 @@ jobs:
     name: PR / Typecheck
     needs: parse-config
     if: needs.parse-config.outputs.typecheck-enabled == 'true'
-    runs-on: ${{ inputs.runs-on }}
+    runs-on: ${{ inputs.runs-on || 'ubuntu-latest' }}
     defaults:
       run:
-        working-directory: ${{ inputs.working-directory }}
+        working-directory: ${{ inputs.working-directory || '.' }}
     steps:
       - uses: actions/checkout@v6
       - uses: actions/setup-node@v6
         with:
-          node-version: ${{ inputs.node-version }}
+          node-version: ${{ inputs.node-version || '22' }}
           cache: npm
-          cache-dependency-path: ${{ inputs.working-directory }}/package-lock.json
+          cache-dependency-path: ${{ inputs.working-directory || '.' }}/package-lock.json
           registry-url: 'https://npm.pkg.github.com'
           scope: '@mossworks-labs'
       - run: npm ci
@@ -220,17 +230,17 @@ jobs:
     name: PR / Format
     needs: parse-config
     if: needs.parse-config.outputs.format-check-enabled == 'true'
-    runs-on: ${{ inputs.runs-on }}
+    runs-on: ${{ inputs.runs-on || 'ubuntu-latest' }}
     defaults:
       run:
-        working-directory: ${{ inputs.working-directory }}
+        working-directory: ${{ inputs.working-directory || '.' }}
     steps:
       - uses: actions/checkout@v6
       - uses: actions/setup-node@v6
         with:
-          node-version: ${{ inputs.node-version }}
+          node-version: ${{ inputs.node-version || '22' }}
           cache: npm
-          cache-dependency-path: ${{ inputs.working-directory }}/package-lock.json
+          cache-dependency-path: ${{ inputs.working-directory || '.' }}/package-lock.json
           registry-url: 'https://npm.pkg.github.com'
           scope: '@mossworks-labs'
       - run: npm ci
@@ -242,17 +252,17 @@ jobs:
     name: PR / Build
     needs: parse-config
     if: needs.parse-config.outputs.build-enabled == 'true'
-    runs-on: ${{ inputs.runs-on }}
+    runs-on: ${{ inputs.runs-on || 'ubuntu-latest' }}
     defaults:
       run:
-        working-directory: ${{ inputs.working-directory }}
+        working-directory: ${{ inputs.working-directory || '.' }}
     steps:
       - uses: actions/checkout@v6
       - uses: actions/setup-node@v6
         with:
-          node-version: ${{ inputs.node-version }}
+          node-version: ${{ inputs.node-version || '22' }}
           cache: npm
-          cache-dependency-path: ${{ inputs.working-directory }}/package-lock.json
+          cache-dependency-path: ${{ inputs.working-directory || '.' }}/package-lock.json
           registry-url: 'https://npm.pkg.github.com'
           scope: '@mossworks-labs'
       - run: npm ci
@@ -264,17 +274,17 @@ jobs:
     name: PR / Test
     needs: parse-config
     if: needs.parse-config.outputs.test-enabled == 'true'
-    runs-on: ${{ inputs.runs-on }}
+    runs-on: ${{ inputs.runs-on || 'ubuntu-latest' }}
     defaults:
       run:
-        working-directory: ${{ inputs.working-directory }}
+        working-directory: ${{ inputs.working-directory || '.' }}
     steps:
       - uses: actions/checkout@v6
       - uses: actions/setup-node@v6
         with:
-          node-version: ${{ inputs.node-version }}
+          node-version: ${{ inputs.node-version || '22' }}
           cache: npm
-          cache-dependency-path: ${{ inputs.working-directory }}/package-lock.json
+          cache-dependency-path: ${{ inputs.working-directory || '.' }}/package-lock.json
           registry-url: 'https://npm.pkg.github.com'
           scope: '@mossworks-labs'
       - run: npm ci
@@ -291,7 +301,7 @@ jobs:
     if: |
       needs.parse-config.outputs.docker-enabled == 'true' &&
       needs.parse-config.outputs.docker-images != '[]'
-    runs-on: ${{ inputs.runs-on }}
+    runs-on: ${{ inputs.runs-on || 'ubuntu-latest' }}
     strategy:
       fail-fast: false
       matrix:
@@ -319,7 +329,7 @@ jobs:
     name: PR / Helm Lint
     needs: parse-config
     if: needs.parse-config.outputs.helm-lint-enabled == 'true'
-    runs-on: ${{ inputs.runs-on }}
+    runs-on: ${{ inputs.runs-on || 'ubuntu-latest' }}
     steps:
       - uses: actions/checkout@v6
         with:
@@ -361,12 +371,12 @@ jobs:
     name: PR / Pulumi Preview
     needs: parse-config
     if: needs.parse-config.outputs.pulumi-preview-enabled == 'true'
-    runs-on: ${{ inputs.runs-on }}
+    runs-on: ${{ inputs.runs-on || 'ubuntu-latest' }}
     steps:
       - uses: actions/checkout@v6
       - uses: actions/setup-node@v6
         with:
-          node-version: ${{ inputs.node-version }}
+          node-version: ${{ inputs.node-version || '22' }}
           cache: npm
           cache-dependency-path: ${{ needs.parse-config.outputs.pulumi-project-dir }}/package-lock.json
           registry-url: 'https://npm.pkg.github.com'
@@ -389,17 +399,17 @@ jobs:
     name: PR / Storybook
     needs: parse-config
     if: needs.parse-config.outputs.storybook-enabled == 'true'
-    runs-on: ${{ inputs.runs-on }}
+    runs-on: ${{ inputs.runs-on || 'ubuntu-latest' }}
     defaults:
       run:
-        working-directory: ${{ inputs.working-directory }}
+        working-directory: ${{ inputs.working-directory || '.' }}
     steps:
       - uses: actions/checkout@v6
       - uses: actions/setup-node@v6
         with:
-          node-version: ${{ inputs.node-version }}
+          node-version: ${{ inputs.node-version || '22' }}
           cache: npm
-          cache-dependency-path: ${{ inputs.working-directory }}/package-lock.json
+          cache-dependency-path: ${{ inputs.working-directory || '.' }}/package-lock.json
           registry-url: 'https://npm.pkg.github.com'
           scope: '@mossworks-labs'
       - run: npm ci
