@@ -368,7 +368,24 @@ jobs:
           base="${{ github.event.pull_request.base.ref || github.event.repository.default_branch }}"
           for d in $(ct list-changed --target-branch "$base"); do
             echo "::group::helm template $d"
-            helm template "$d"
+            # Pull subchart deps first so charts with `dependencies:` in
+            # Chart.yaml can render. `|| true` because some charts list
+            # private OCI deps that aren't reachable from this runner —
+            # the subsequent helm template will fail loudly if the deps
+            # really were needed.
+            helm dependency update "$d" || true
+            # If the chart provides ci/*-values.yaml fixtures, render
+            # against each one so charts with `required` fields (or
+            # multiple deploy modes) are fully exercised. Falls back to
+            # chart defaults when no fixtures exist.
+            if compgen -G "$d/ci/*-values.yaml" > /dev/null; then
+              for v in "$d"/ci/*-values.yaml; do
+                echo "  -> --values $v"
+                helm template test "$d" --values "$v" > /dev/null
+              done
+            else
+              helm template test "$d" > /dev/null
+            fi
             echo "::endgroup::"
           done
 
