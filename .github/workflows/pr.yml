@@ -34,9 +34,9 @@ on:
         type: string
         default: "ubuntu-latest"
       node-version:
-        description: "Node.js version for the npm-based checks. Defaults to 22 (the org's pinned major)."
+        description: "Node.js version for the npm-based checks. Defaults to 24 (current LTS)."
         type: string
-        default: "22"
+        default: "24"
       working-directory:
         description: "Working directory the npm-based checks run in. Defaults to repo root."
         type: string
@@ -198,7 +198,7 @@ jobs:
       - uses: actions/checkout@v6
       - uses: actions/setup-node@v6
         with:
-          node-version: ${{ inputs.node-version || '22' }}
+          node-version: ${{ inputs.node-version || '24' }}
           cache: npm
           cache-dependency-path: ${{ inputs.working-directory || '.' }}/package-lock.json
           registry-url: 'https://npm.pkg.github.com'
@@ -220,7 +220,7 @@ jobs:
       - uses: actions/checkout@v6
       - uses: actions/setup-node@v6
         with:
-          node-version: ${{ inputs.node-version || '22' }}
+          node-version: ${{ inputs.node-version || '24' }}
           cache: npm
           cache-dependency-path: ${{ inputs.working-directory || '.' }}/package-lock.json
           registry-url: 'https://npm.pkg.github.com'
@@ -242,7 +242,7 @@ jobs:
       - uses: actions/checkout@v6
       - uses: actions/setup-node@v6
         with:
-          node-version: ${{ inputs.node-version || '22' }}
+          node-version: ${{ inputs.node-version || '24' }}
           cache: npm
           cache-dependency-path: ${{ inputs.working-directory || '.' }}/package-lock.json
           registry-url: 'https://npm.pkg.github.com'
@@ -264,7 +264,7 @@ jobs:
       - uses: actions/checkout@v6
       - uses: actions/setup-node@v6
         with:
-          node-version: ${{ inputs.node-version || '22' }}
+          node-version: ${{ inputs.node-version || '24' }}
           cache: npm
           cache-dependency-path: ${{ inputs.working-directory || '.' }}/package-lock.json
           registry-url: 'https://npm.pkg.github.com'
@@ -286,7 +286,7 @@ jobs:
       - uses: actions/checkout@v6
       - uses: actions/setup-node@v6
         with:
-          node-version: ${{ inputs.node-version || '22' }}
+          node-version: ${{ inputs.node-version || '24' }}
           cache: npm
           cache-dependency-path: ${{ inputs.working-directory || '.' }}/package-lock.json
           registry-url: 'https://npm.pkg.github.com'
@@ -397,7 +397,7 @@ jobs:
       - uses: actions/checkout@v6
       - uses: actions/setup-node@v6
         with:
-          node-version: ${{ inputs.node-version || '22' }}
+          node-version: ${{ inputs.node-version || '24' }}
           cache: npm
           cache-dependency-path: ${{ needs.parse-config.outputs.pulumi-project-dir }}/package-lock.json
           registry-url: 'https://npm.pkg.github.com'
@@ -428,7 +428,7 @@ jobs:
       - uses: actions/checkout@v6
       - uses: actions/setup-node@v6
         with:
-          node-version: ${{ inputs.node-version || '22' }}
+          node-version: ${{ inputs.node-version || '24' }}
           cache: npm
           cache-dependency-path: ${{ inputs.working-directory || '.' }}/package-lock.json
           registry-url: 'https://npm.pkg.github.com'
