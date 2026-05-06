@@ -175,7 +175,11 @@ The trampoline must pass `PULUMI_ACCESS_TOKEN`.
 
 ## Org ruleset (one-time setup)
 
-Once the universal workflow is rolled out across the org, configure the ruleset:
+Two enforcement options — pick **one** to avoid duplicate runs:
+
+### Option 1: Require the status check (recommended)
+
+Each repo must have a trampoline; the trampoline produces the `PR / aggregate` check. The ruleset requires that check to pass before merge.
 
 1. **GitHub UI** → Org settings → **Repository rulesets** → New ruleset → Branch ruleset.
 2. **Target**: All repositories under `Mossworks-Labs` (with optional excludes for archived / sandbox repos).
@@ -183,10 +187,22 @@ Once the universal workflow is rolled out across the org, configure the ruleset:
 4. **Rules**:
    - Restrict deletions
    - Require pull request before merging (1 approval)
-   - **Require status checks to pass**: add `PR / aggregate`
-   - **Require workflows to pass**: `Mossworks-Labs/.github/.github/workflows/pr.yml@main` (the injection backstop, so repos that haven't added the trampoline still get validated)
+   - **Require status checks to pass** → add `PR / aggregate`
 
-Or via `gh api`:
+A repo without a trampoline never reports `PR / aggregate`, so its PRs cannot merge — this forces every repo to opt in.
+
+### Option 2: Required workflow injection (backstop)
+
+The ruleset injects `pr.yml` automatically on every PR, no trampoline needed.
+
+1. Same UI as above, but under **Rules** add:
+   - **Require workflows to pass** → workflow file path `.github/workflows/pr.yml`, ref `main`, source repo `Mossworks-Labs/.github`
+
+The workflow runs on `pull_request` directly with default inputs and the repo's own `secrets.GITHUB_TOKEN`. Repos that need extra secrets (`build-secrets` for docker, `PULUMI_ACCESS_TOKEN` for pulumi-preview) cannot use this mode and must use Option 1's trampoline approach.
+
+> ⚠️ **Don't use both.** If a repo has a trampoline AND the ruleset injects the workflow, the same workflow runs twice on every PR. Pick one strategy per repo (or per ruleset target).
+
+### `gh api` example
 
 ```bash
 gh api -X POST /orgs/Mossworks-Labs/rulesets \

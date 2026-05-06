@@ -15,6 +15,17 @@ name: PR Validation
 #   https://github.com/Mossworks-Labs/.github/blob/main/docs/pr-validation.md
 
 on:
+  # Two trigger modes:
+  #   1. workflow_call — invoked by per-repo trampolines. Trampoline can
+  #      pass repo-specific secrets (NODE_AUTH_TOKEN, build-secrets,
+  #      PULUMI_ACCESS_TOKEN) and override runs-on/node-version.
+  #   2. pull_request — eligible to be set as an org-level required
+  #      workflow via repository ruleset (GitHub requires one of
+  #      pull_request / pull_request_target / merge_queue for that). When
+  #      injected this way, inputs use defaults and only the repo's own
+  #      `secrets.GITHUB_TOKEN` is available — repos that need the docker
+  #      or pulumi-preview checks must add a trampoline so the relevant
+  #      secrets can flow through.
   workflow_call:
     inputs:
       runs-on:
@@ -39,6 +50,8 @@ on:
       PULUMI_ACCESS_TOKEN:
         description: "Pulumi Cloud access token for the pulumi-preview check. Required when `checks.pulumi-preview` is true."
         required: false
+  pull_request:
+    branches: [main]
 
 permissions:
   contents: read
