@@ -1,4 +1,4 @@
-name: PR Validation
+name: validation
 
 # Reusable workflow that runs the org-standard PR validation checks.
 # Each repo invokes it via `.github/workflows/pr.yml` (a thin trampoline)
