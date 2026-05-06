@@ -87,3 +87,12 @@ jobs:
 ## Org Workflow Templates
 
 The `workflow-templates/security.yml` template is available to all Mossworks Labs repos via **Actions > New workflow > Mossworks Labs Security**.
+
+## Rulesets as Code
+
+Org-level repository rulesets live as JSON in `.github/rulesets/`. A workflow at
+`.github/workflows/apply-rulesets.yml` validates them on every PR and applies
+them to `Mossworks-Labs` on push to main.
+
+See [docs/rulesets.md](docs/rulesets.md) for the schema, bootstrap, and the
+required `ORG_RULESET_TOKEN` secret.
