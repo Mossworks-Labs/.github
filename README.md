@@ -4,6 +4,28 @@ Reusable GitHub Actions workflows and composite actions for Mossworks Labs proje
 
 ## Reusable Workflows
 
+### `pr.yml` — Universal PR Validation
+The org's standard PR-validation workflow. Each repo invokes it via a thin
+trampoline at `.github/workflows/pr.yml`; per-repo toggles + options live in
+`.github/pr_validation.yml`. Defaults cover lint + typecheck + format-check +
+build + test for any Node/TS repo with no config file. Optional checks
+(docker, helm-lint, pulumi-preview, storybook) opt in via the config.
+
+```yaml
+jobs:
+  validation:
+    uses: Mossworks-Labs/.github/.github/workflows/pr.yml@main
+    permissions:
+      contents: read
+      packages: read
+    secrets:
+      NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      build-secrets: |
+        NODE_AUTH_TOKEN=${{ secrets.GITHUB_TOKEN }}
+```
+
+Full schema + examples: [docs/pr-validation.md](docs/pr-validation.md).
+
 ### `docker-build.yml`
 Build and push Docker images to GHCR.
 
