@@ -208,6 +208,18 @@ jobs:
              && [ "$(node -v | sed 's/^v//' | cut -d. -f1)" = "$want" ]; then
             echo "Node $(node -v) already installed; skipping setup-node."
             echo "skip=true" >> "$GITHUB_OUTPUT"
+            # setup-node would have written this .npmrc and exported
+            # NPM_CONFIG_USERCONFIG; replicate so npm ci can still
+            # auth to GHCR for private @mossworks-labs deps. The
+            # ${NODE_AUTH_TOKEN} placeholder is resolved by npm at
+            # install time from the env var on the npm ci step.
+            npmrc="$RUNNER_TEMP/.npmrc"
+            {
+              echo '@mossworks-labs:registry=https://npm.pkg.github.com/'
+              echo '//npm.pkg.github.com/:_authToken=${NODE_AUTH_TOKEN}'
+              echo 'always-auth=true'
+            } > "$npmrc"
+            echo "NPM_CONFIG_USERCONFIG=$npmrc" >> "$GITHUB_ENV"
           else
             echo "skip=false" >> "$GITHUB_OUTPUT"
           fi
@@ -246,6 +258,18 @@ jobs:
              && [ "$(node -v | sed 's/^v//' | cut -d. -f1)" = "$want" ]; then
             echo "Node $(node -v) already installed; skipping setup-node."
             echo "skip=true" >> "$GITHUB_OUTPUT"
+            # setup-node would have written this .npmrc and exported
+            # NPM_CONFIG_USERCONFIG; replicate so npm ci can still
+            # auth to GHCR for private @mossworks-labs deps. The
+            # ${NODE_AUTH_TOKEN} placeholder is resolved by npm at
+            # install time from the env var on the npm ci step.
+            npmrc="$RUNNER_TEMP/.npmrc"
+            {
+              echo '@mossworks-labs:registry=https://npm.pkg.github.com/'
+              echo '//npm.pkg.github.com/:_authToken=${NODE_AUTH_TOKEN}'
+              echo 'always-auth=true'
+            } > "$npmrc"
+            echo "NPM_CONFIG_USERCONFIG=$npmrc" >> "$GITHUB_ENV"
           else
             echo "skip=false" >> "$GITHUB_OUTPUT"
           fi
@@ -284,6 +308,18 @@ jobs:
              && [ "$(node -v | sed 's/^v//' | cut -d. -f1)" = "$want" ]; then
             echo "Node $(node -v) already installed; skipping setup-node."
             echo "skip=true" >> "$GITHUB_OUTPUT"
+            # setup-node would have written this .npmrc and exported
+            # NPM_CONFIG_USERCONFIG; replicate so npm ci can still
+            # auth to GHCR for private @mossworks-labs deps. The
+            # ${NODE_AUTH_TOKEN} placeholder is resolved by npm at
+            # install time from the env var on the npm ci step.
+            npmrc="$RUNNER_TEMP/.npmrc"
+            {
+              echo '@mossworks-labs:registry=https://npm.pkg.github.com/'
+              echo '//npm.pkg.github.com/:_authToken=${NODE_AUTH_TOKEN}'
+              echo 'always-auth=true'
+            } > "$npmrc"
+            echo "NPM_CONFIG_USERCONFIG=$npmrc" >> "$GITHUB_ENV"
           else
             echo "skip=false" >> "$GITHUB_OUTPUT"
           fi
@@ -322,6 +358,18 @@ jobs:
              && [ "$(node -v | sed 's/^v//' | cut -d. -f1)" = "$want" ]; then
             echo "Node $(node -v) already installed; skipping setup-node."
             echo "skip=true" >> "$GITHUB_OUTPUT"
+            # setup-node would have written this .npmrc and exported
+            # NPM_CONFIG_USERCONFIG; replicate so npm ci can still
+            # auth to GHCR for private @mossworks-labs deps. The
+            # ${NODE_AUTH_TOKEN} placeholder is resolved by npm at
+            # install time from the env var on the npm ci step.
+            npmrc="$RUNNER_TEMP/.npmrc"
+            {
+              echo '@mossworks-labs:registry=https://npm.pkg.github.com/'
+              echo '//npm.pkg.github.com/:_authToken=${NODE_AUTH_TOKEN}'
+              echo 'always-auth=true'
+            } > "$npmrc"
+            echo "NPM_CONFIG_USERCONFIG=$npmrc" >> "$GITHUB_ENV"
           else
             echo "skip=false" >> "$GITHUB_OUTPUT"
           fi
@@ -360,6 +408,18 @@ jobs:
              && [ "$(node -v | sed 's/^v//' | cut -d. -f1)" = "$want" ]; then
             echo "Node $(node -v) already installed; skipping setup-node."
             echo "skip=true" >> "$GITHUB_OUTPUT"
+            # setup-node would have written this .npmrc and exported
+            # NPM_CONFIG_USERCONFIG; replicate so npm ci can still
+            # auth to GHCR for private @mossworks-labs deps. The
+            # ${NODE_AUTH_TOKEN} placeholder is resolved by npm at
+            # install time from the env var on the npm ci step.
+            npmrc="$RUNNER_TEMP/.npmrc"
+            {
+              echo '@mossworks-labs:registry=https://npm.pkg.github.com/'
+              echo '//npm.pkg.github.com/:_authToken=${NODE_AUTH_TOKEN}'
+              echo 'always-auth=true'
+            } > "$npmrc"
+            echo "NPM_CONFIG_USERCONFIG=$npmrc" >> "$GITHUB_ENV"
           else
             echo "skip=false" >> "$GITHUB_OUTPUT"
           fi
@@ -500,6 +560,18 @@ jobs:
              && [ "$(node -v | sed 's/^v//' | cut -d. -f1)" = "$want" ]; then
             echo "Node $(node -v) already installed; skipping setup-node."
             echo "skip=true" >> "$GITHUB_OUTPUT"
+            # setup-node would have written this .npmrc and exported
+            # NPM_CONFIG_USERCONFIG; replicate so npm ci can still
+            # auth to GHCR for private @mossworks-labs deps. The
+            # ${NODE_AUTH_TOKEN} placeholder is resolved by npm at
+            # install time from the env var on the npm ci step.
+            npmrc="$RUNNER_TEMP/.npmrc"
+            {
+              echo '@mossworks-labs:registry=https://npm.pkg.github.com/'
+              echo '//npm.pkg.github.com/:_authToken=${NODE_AUTH_TOKEN}'
+              echo 'always-auth=true'
+            } > "$npmrc"
+            echo "NPM_CONFIG_USERCONFIG=$npmrc" >> "$GITHUB_ENV"
           else
             echo "skip=false" >> "$GITHUB_OUTPUT"
           fi
@@ -547,6 +619,18 @@ jobs:
              && [ "$(node -v | sed 's/^v//' | cut -d. -f1)" = "$want" ]; then
             echo "Node $(node -v) already installed; skipping setup-node."
             echo "skip=true" >> "$GITHUB_OUTPUT"
+            # setup-node would have written this .npmrc and exported
+            # NPM_CONFIG_USERCONFIG; replicate so npm ci can still
+            # auth to GHCR for private @mossworks-labs deps. The
+            # ${NODE_AUTH_TOKEN} placeholder is resolved by npm at
+            # install time from the env var on the npm ci step.
+            npmrc="$RUNNER_TEMP/.npmrc"
+            {
+              echo '@mossworks-labs:registry=https://npm.pkg.github.com/'
+              echo '//npm.pkg.github.com/:_authToken=${NODE_AUTH_TOKEN}'
+              echo 'always-auth=true'
+            } > "$npmrc"
+            echo "NPM_CONFIG_USERCONFIG=$npmrc" >> "$GITHUB_ENV"
           else
             echo "skip=false" >> "$GITHUB_OUTPUT"
           fi
