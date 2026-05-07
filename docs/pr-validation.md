@@ -125,6 +125,20 @@ secrets:
 
 Anything not needed can be omitted.
 
+## Pulling private GHCR base images in the docker check
+
+The `docker` job now logs in to `ghcr.io` with `secrets.GITHUB_TOKEN` before running `docker buildx build`, so Dockerfiles that `FROM ghcr.io/mossworks-labs/<base>` (e.g. `node:24-alpine` from [`Mossworks-Labs/dockerfiles`](https://github.com/Mossworks-Labs/dockerfiles)) can pull internal/private base images without a 401.
+
+There's a second piece you have to configure once per consuming repo: GHCR scopes the per-repo `GITHUB_TOKEN` to packages owned by that repo, so even with the login step a *cross-repo* internal package will 401 unless you grant the consumer access via the package's "Manage Actions access" UI.
+
+For each repo that consumes `ghcr.io/mossworks-labs/<base>`:
+
+1. Open https://github.com/orgs/Mossworks-Labs/packages/container/`<base>`/settings (e.g. `node`).
+2. Scroll to **Manage Actions access**.
+3. Add the consuming repo (e.g. `bryo`).
+
+This is a one-time UI grant. After that, every PR build for that repo can pull the base image with no further setup.
+
 ## Per-repo examples
 
 ### A standard Node/TS repo (no config file needed)
