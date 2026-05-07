@@ -196,7 +196,23 @@ jobs:
         working-directory: ${{ inputs.working-directory || '.' }}
     steps:
       - uses: actions/checkout@v6
+      # Skip setup-node when the runner image already ships the requested
+      # major (saves ~5–15s per job on self-hosted runners that preinstall
+      # Node). setup-node still runs on hosted runners or version mismatch.
+      - name: Check Node
+        id: node-check
+        shell: bash
+        run: |
+          want="${{ inputs.node-version || '24' }}"
+          if command -v node >/dev/null 2>&1 \
+             && [ "$(node -v | sed 's/^v//' | cut -d. -f1)" = "$want" ]; then
+            echo "Node $(node -v) already installed; skipping setup-node."
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "skip=false" >> "$GITHUB_OUTPUT"
+          fi
       - uses: actions/setup-node@v6
+        if: steps.node-check.outputs.skip != 'true'
         with:
           node-version: ${{ inputs.node-version || '24' }}
           cache: npm
@@ -218,7 +234,23 @@ jobs:
         working-directory: ${{ inputs.working-directory || '.' }}
     steps:
       - uses: actions/checkout@v6
+      # Skip setup-node when the runner image already ships the requested
+      # major (saves ~5–15s per job on self-hosted runners that preinstall
+      # Node). setup-node still runs on hosted runners or version mismatch.
+      - name: Check Node
+        id: node-check
+        shell: bash
+        run: |
+          want="${{ inputs.node-version || '24' }}"
+          if command -v node >/dev/null 2>&1 \
+             && [ "$(node -v | sed 's/^v//' | cut -d. -f1)" = "$want" ]; then
+            echo "Node $(node -v) already installed; skipping setup-node."
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "skip=false" >> "$GITHUB_OUTPUT"
+          fi
       - uses: actions/setup-node@v6
+        if: steps.node-check.outputs.skip != 'true'
         with:
           node-version: ${{ inputs.node-version || '24' }}
           cache: npm
@@ -240,7 +272,23 @@ jobs:
         working-directory: ${{ inputs.working-directory || '.' }}
     steps:
       - uses: actions/checkout@v6
+      # Skip setup-node when the runner image already ships the requested
+      # major (saves ~5–15s per job on self-hosted runners that preinstall
+      # Node). setup-node still runs on hosted runners or version mismatch.
+      - name: Check Node
+        id: node-check
+        shell: bash
+        run: |
+          want="${{ inputs.node-version || '24' }}"
+          if command -v node >/dev/null 2>&1 \
+             && [ "$(node -v | sed 's/^v//' | cut -d. -f1)" = "$want" ]; then
+            echo "Node $(node -v) already installed; skipping setup-node."
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "skip=false" >> "$GITHUB_OUTPUT"
+          fi
       - uses: actions/setup-node@v6
+        if: steps.node-check.outputs.skip != 'true'
         with:
           node-version: ${{ inputs.node-version || '24' }}
           cache: npm
@@ -262,7 +310,23 @@ jobs:
         working-directory: ${{ inputs.working-directory || '.' }}
     steps:
       - uses: actions/checkout@v6
+      # Skip setup-node when the runner image already ships the requested
+      # major (saves ~5–15s per job on self-hosted runners that preinstall
+      # Node). setup-node still runs on hosted runners or version mismatch.
+      - name: Check Node
+        id: node-check
+        shell: bash
+        run: |
+          want="${{ inputs.node-version || '24' }}"
+          if command -v node >/dev/null 2>&1 \
+             && [ "$(node -v | sed 's/^v//' | cut -d. -f1)" = "$want" ]; then
+            echo "Node $(node -v) already installed; skipping setup-node."
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "skip=false" >> "$GITHUB_OUTPUT"
+          fi
       - uses: actions/setup-node@v6
+        if: steps.node-check.outputs.skip != 'true'
         with:
           node-version: ${{ inputs.node-version || '24' }}
           cache: npm
@@ -284,7 +348,23 @@ jobs:
         working-directory: ${{ inputs.working-directory || '.' }}
     steps:
       - uses: actions/checkout@v6
+      # Skip setup-node when the runner image already ships the requested
+      # major (saves ~5–15s per job on self-hosted runners that preinstall
+      # Node). setup-node still runs on hosted runners or version mismatch.
+      - name: Check Node
+        id: node-check
+        shell: bash
+        run: |
+          want="${{ inputs.node-version || '24' }}"
+          if command -v node >/dev/null 2>&1 \
+             && [ "$(node -v | sed 's/^v//' | cut -d. -f1)" = "$want" ]; then
+            echo "Node $(node -v) already installed; skipping setup-node."
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "skip=false" >> "$GITHUB_OUTPUT"
+          fi
       - uses: actions/setup-node@v6
+        if: steps.node-check.outputs.skip != 'true'
         with:
           node-version: ${{ inputs.node-version || '24' }}
           cache: npm
@@ -411,7 +491,20 @@ jobs:
     runs-on: ${{ inputs.runs-on || 'ubuntu-latest' }}
     steps:
       - uses: actions/checkout@v6
+      - name: Check Node
+        id: node-check
+        shell: bash
+        run: |
+          want="${{ inputs.node-version || '24' }}"
+          if command -v node >/dev/null 2>&1 \
+             && [ "$(node -v | sed 's/^v//' | cut -d. -f1)" = "$want" ]; then
+            echo "Node $(node -v) already installed; skipping setup-node."
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "skip=false" >> "$GITHUB_OUTPUT"
+          fi
       - uses: actions/setup-node@v6
+        if: steps.node-check.outputs.skip != 'true'
         with:
           node-version: ${{ inputs.node-version || '24' }}
           cache: npm
@@ -442,7 +535,23 @@ jobs:
         working-directory: ${{ inputs.working-directory || '.' }}
     steps:
       - uses: actions/checkout@v6
+      # Skip setup-node when the runner image already ships the requested
+      # major (saves ~5–15s per job on self-hosted runners that preinstall
+      # Node). setup-node still runs on hosted runners or version mismatch.
+      - name: Check Node
+        id: node-check
+        shell: bash
+        run: |
+          want="${{ inputs.node-version || '24' }}"
+          if command -v node >/dev/null 2>&1 \
+             && [ "$(node -v | sed 's/^v//' | cut -d. -f1)" = "$want" ]; then
+            echo "Node $(node -v) already installed; skipping setup-node."
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "skip=false" >> "$GITHUB_OUTPUT"
+          fi
       - uses: actions/setup-node@v6
+        if: steps.node-check.outputs.skip != 'true'
         with:
           node-version: ${{ inputs.node-version || '24' }}
           cache: npm
