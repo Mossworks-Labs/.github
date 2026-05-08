@@ -1,0 +1,11 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/Mossworks-Labs/actions/main/pr_validation.schema.json
+
+# This repo holds community-health files only — no package.json, no
+# code to lint or build. Disable every npm-based check; aggregate still
+# runs and reports success because skipped jobs count as OK.
+checks:
+  lint: false
+  typecheck: false
+  format-check: false
+  build: false
+  test: false
