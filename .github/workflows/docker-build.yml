@@ -39,6 +39,10 @@ on:
         description: "Newline-separated list of `KEY=VALUE` build args to forward to docker build. Use sparingly — anything sensitive belongs in `secrets` (BuildKit secrets) instead, since build-args land in image history. Example use: passing VITE_API_BASE_URL into a frontend SPA build."
         type: string
         default: ""
+      platforms:
+        description: "Comma-separated list of target platforms for multi-arch builds, e.g. `linux/amd64,linux/arm64`. Default `linux/amd64` (single-arch) keeps github-hosted runner build times short. Set to multi-arch when consumers run on mixed-arch clusters; QEMU is set up automatically when the value contains a comma. Cross-arch builds via QEMU are 2-5x slower than native — for production-throughput multi-arch, route through a self-hosted runner with native arm64 (set `runs-on:` accordingly) or use docker/setup-buildx-action with a remote arm64 builder."
+        type: string
+        default: "linux/amd64"
     secrets:
       build-secrets:
         description: "Newline-separated list of `KEY=VALUE` BuildKit secrets to forward to docker build. Mounted via `--mount=type=secret,id=KEY` in the Dockerfile so the value never lands in image layers or history. Use this for npm/registry tokens needed to install private deps at build time (e.g. NODE_AUTH_TOKEN for @mossworks-labs scoped packages from GitHub Packages)."
@@ -92,6 +96,14 @@ jobs:
             echo "::warning::Source unchanged but :latest is missing for $IMAGE — falling back to build."
           fi
 
+      - name: Set up QEMU (for cross-arch builds)
+        if: steps.mode.outputs.mode == 'build' && contains(inputs.platforms, ',')
+        uses: docker/setup-qemu-action@v3
+        with:
+          # arm64 is the only non-native platform we currently target for
+          # cross-arch builds. Add others here if/when consumers need them.
+          platforms: arm64
+
       - uses: docker/setup-buildx-action@v4
         if: steps.mode.outputs.mode == 'build'
 
@@ -102,6 +114,7 @@ jobs:
           context: ${{ inputs.context }}
           file: ${{ inputs.dockerfile }}
           target: ${{ inputs.target }}
+          platforms: ${{ inputs.platforms }}
           push: ${{ github.event_name == 'push' || github.event_name == 'workflow_dispatch' }}
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
@@ -110,6 +123,9 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max,ignore-error=true
 
+      - uses: docker/setup-buildx-action@v4
+        if: steps.mode.outputs.mode == 'retag'
+
       - name: Retag :latest as every metadata tag
         if: steps.mode.outputs.mode == 'retag'
         env:
@@ -117,19 +133,20 @@ jobs:
         run: |
           set -euo pipefail
           IMAGE="${{ inputs.registry }}/${{ inputs.image-prefix }}/${{ inputs.image-name }}"
-          # Pull the source image we'll re-tag.
-          docker pull "$IMAGE:latest"
-          # docker/metadata-action emits each `image:tag` ref on its own line.
-          # Apply every one — typically `:<sha>`, `:<branch>`, and `:latest`
-          # on the default branch. The `:latest` self-tag is a harmless no-op.
-          # This keeps :main / :latest in lockstep with :<sha> for services
-          # whose source didn't change in this push (otherwise :main would
-          # rot at whatever the last source-changed build produced).
+          # Use `docker buildx imagetools create` to retag, NOT the legacy
+          # `docker pull && docker tag && docker push` path. The legacy path
+          # only sees the runner's native platform (amd64 typically) and
+          # collapses a multi-arch manifest list down to that single arch
+          # when re-pushed — silently breaking arm64 consumers. imagetools
+          # operates on the manifest list itself and preserves all platforms.
           while IFS= read -r ref; do
             [ -z "$ref" ] && continue
+            if [ "$ref" = "$IMAGE:latest" ]; then
+              echo "Skipping self-tag $ref"
+              continue
+            fi
             echo "Tagging $ref"
-            docker tag "$IMAGE:latest" "$ref"
-            docker push "$ref"
+            docker buildx imagetools create -t "$ref" "$IMAGE:latest"
           done <<< "$META_TAGS"
 
       - name: Summary
