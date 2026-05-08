@@ -28,6 +28,11 @@ permissions:
 jobs:
   validation:
     uses: ./.github/workflows/pr.yml
+    with:
+      # Self-hosted while the org's GitHub-hosted-runner billing limit
+      # is in effect — same pattern used by the consumer trampolines
+      # in site/, craft-studio/, marketplace/.
+      runs-on: mossworks-labs
     permissions:
       contents: read
       packages: read
