@@ -1,0 +1,110 @@
+name: Apply Org Rulesets
+
+# Codifies org-level GitHub repository rulesets.
+#
+# JSON files in `.github/rulesets/` are the source of truth. On push to
+# main this workflow PUTs/POSTs each one against
+# `/orgs/Mossworks-Labs/rulesets`, matched by `name`. On PR it dry-runs:
+# validates the JSON and shows a diff against what's currently live so
+# reviewers can see exactly what would change.
+#
+# Drift handling: rulesets present on the org but NOT in this dir are
+# left alone (no implicit deletion). To remove a ruleset, delete it via
+# the UI/API — the file deletion alone won't.
+#
+# Required: a repository secret `ORG_RULESET_TOKEN` containing a token
+# with org admin permissions ("Administration: write" on the
+# Mossworks-Labs org). The default `secrets.GITHUB_TOKEN` cannot manage
+# org-level resources.
+#
+# See docs/rulesets.md for the full schema reference + bootstrap steps.
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/rulesets/**'
+      - '.github/workflows/apply-rulesets.yml'
+      - '.github/scripts/apply-rulesets.sh'
+  pull_request:
+    branches: [main]
+    paths:
+      - '.github/rulesets/**'
+      - '.github/workflows/apply-rulesets.yml'
+      - '.github/scripts/apply-rulesets.sh'
+  workflow_dispatch:
+    inputs:
+      dry-run:
+        description: "Show diff without applying changes"
+        type: boolean
+        default: true
+
+permissions:
+  contents: read
+
+concurrency:
+  # Serialize applies — two simultaneous PUTs would race.
+  group: apply-rulesets
+  cancel-in-progress: false
+
+jobs:
+  validate:
+    name: Validate ruleset JSON
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Schema-shape sanity check
+        shell: bash
+        run: |
+          set -euo pipefail
+          shopt -s nullglob
+          files=(.github/rulesets/*.json)
+          shopt -u nullglob
+          if [ "${#files[@]}" -eq 0 ]; then
+            echo "no .github/rulesets/*.json files found"
+            exit 0
+          fi
+          for f in "${files[@]}"; do
+            echo "::group::$f"
+            jq empty "$f"
+            jq -e '.name and .target and .enforcement and .conditions and .rules' "$f" > /dev/null \
+              || { echo "::error file=${f}::missing one of: name, target, enforcement, conditions, rules"; exit 1; }
+            echo "ok"
+            echo "::endgroup::"
+          done
+
+  diff:
+    name: Diff against live rulesets
+    needs: validate
+    if: github.event_name == 'pull_request' || (github.event_name == 'workflow_dispatch' && inputs.dry-run)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - name: Dry-run apply (diff only)
+        env:
+          GH_TOKEN: ${{ secrets.ORG_RULESET_TOKEN }}
+        run: |
+          if [ -z "${GH_TOKEN:-}" ]; then
+            echo "::warning::ORG_RULESET_TOKEN secret not set — skipping live diff. The validate job still ran."
+            echo "(Set ORG_RULESET_TOKEN with org admin scope to enable diff output here.)"
+            exit 0
+          fi
+          .github/scripts/apply-rulesets.sh Mossworks-Labs .github/rulesets --dry-run
+
+  apply:
+    name: Apply
+    needs: validate
+    if: github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && inputs.dry-run == false)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - name: Apply rulesets
+        env:
+          GH_TOKEN: ${{ secrets.ORG_RULESET_TOKEN }}
+        run: |
+          if [ -z "${GH_TOKEN:-}" ]; then
+            echo "::error::ORG_RULESET_TOKEN secret is not set — cannot apply"
+            exit 1
+          fi
+          .github/scripts/apply-rulesets.sh Mossworks-Labs .github/rulesets

@@ -121,7 +121,14 @@ jobs:
           build-args: ${{ inputs.build-args }}
           secrets: ${{ secrets.build-secrets }}
           cache-from: type=gha
-          cache-to: type=gha,mode=max,ignore-error=true
+          # mode=min only caches FROM lines + final layers, not every
+          # intermediate. The cache-to step on bryo's image was running
+          # ~50s/build under mode=max because node_modules (~600MB) was
+          # being uploaded into the GHA cache backend on every build.
+          # mode=min trades partial cache restores for much faster
+          # exports — net win when most rebuilds touch source (cheap
+          # tail layers) rather than the lockfile (already a slow case).
+          cache-to: type=gha,mode=min,ignore-error=true
 
       - uses: docker/setup-buildx-action@v4
         if: steps.mode.outputs.mode == 'retag'
