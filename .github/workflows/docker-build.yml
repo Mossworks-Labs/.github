@@ -31,7 +31,7 @@ on:
       image-prefix:
         description: "Image prefix (org/repo)"
         type: string
-        default: "vibesmiths"
+        default: "mossworks-labs"
       source-changed:
         description: "Whether source paths for this image changed. When false (and pushing on a branch) and :latest exists, the job pulls :latest and retags it with every tag metadata-action would have applied (`:<sha>`, `:<branch>`, and `:latest` on the default branch) instead of rebuilding. If :latest is missing it falls back to a normal build so the deploy still finds the SHA tag."
         type: boolean
