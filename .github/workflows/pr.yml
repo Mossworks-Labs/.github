@@ -1,10 +1,14 @@
 name: validation
 
-# Trampoline that calls the org's universal PR validation workflow on
-# this repo's own PRs. The reusable workflow now lives in
-# Mossworks-Labs/actions; this repo only carries community-health files
-# (CoC, CONTRIBUTING, SECURITY, ISSUE_TEMPLATE, PULL_REQUEST_TEMPLATE,
-# profile/, workflow-templates/) and needs validation only for those.
+# PR validation for the .github repo itself.
+#
+# This repo is PUBLIC, so it cannot call the org's universal PR validation
+# reusable workflow in the private Mossworks-Labs/actions repo — public
+# repos can only use reusable workflows from public repos (the previous
+# trampoline here failed at workflow-resolution time on every PR since the
+# 2026-05-08 move). This repo only carries community-health files, profile/,
+# and workflow-templates/, so validation is a lightweight local check:
+# every YAML file must parse.
 
 on:
   pull_request:
@@ -12,13 +16,21 @@ on:
 
 permissions:
   contents: read
-  packages: read
 
 jobs:
   validation:
-    uses: Mossworks-Labs/actions/.github/workflows/pr.yml@main
-    permissions:
-      contents: read
-      packages: read
-    secrets:
-      NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    name: PR / yaml-parse
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - name: All YAML files parse
+        run: |
+          set -euo pipefail
+          status=0
+          while IFS= read -r -d '' f; do
+            if ! yq eval '.' "$f" > /dev/null; then
+              echo "::error file=$f::YAML parse failed"
+              status=1
+            fi
+          done < <(find . -path ./.git -prune -o \( -name '*.yml' -o -name '*.yaml' \) -print0)
+          exit $status
