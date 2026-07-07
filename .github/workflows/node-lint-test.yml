@@ -1,0 +1,57 @@
+name: Node.js Lint & Test
+# ─────────────────────────────────────────────────────────────────────────
+# PUBLIC-CONSUMER COPY — restored after the 2026-05-08 move to
+# Mossworks-Labs/actions broke every public caller (mcp-*): public repos
+# cannot call reusable workflows living in a private repo, and cannot see
+# the private-visibility org var DEFAULT_RUNNER_NAME (self-hosted runners
+# on public repos are a fork-PR security risk anyway).
+# Canonical version: Mossworks-Labs/actions/.github/workflows (private) —
+# when updating it, mirror the change here (runner lines excepted).
+# ─────────────────────────────────────────────────────────────────────────
+
+on:
+  workflow_call:
+    inputs:
+      node-version:
+        description: "Node.js version"
+        type: string
+        default: "24"
+      working-directory:
+        description: "Working directory"
+        type: string
+        default: "."
+
+jobs:
+  lint-test:
+    name: Lint & Test
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ${{ inputs.working-directory }}
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: ${{ inputs.node-version }}
+          cache: npm
+          cache-dependency-path: ${{ inputs.working-directory }}/package-lock.json
+
+      - run: npm ci
+
+      - name: TypeScript check
+        run: npx tsc --noEmit
+
+      - name: Test
+        run: |
+          if npm run test --if-present 2>&1 | grep -q "Missing script"; then
+            echo "No test script found, skipping"
+          else
+            npm test --if-present
+          fi
+
+      - name: Summary
+        if: always()
+        run: |
+          echo "### Lint & Test" >> "$GITHUB_STEP_SUMMARY"
+          echo "Node ${{ inputs.node-version }}" >> "$GITHUB_STEP_SUMMARY"

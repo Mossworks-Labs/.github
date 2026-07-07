@@ -1,0 +1,169 @@
+name: Docker Build & Push
+# ─────────────────────────────────────────────────────────────────────────
+# PUBLIC-CONSUMER COPY — restored after the 2026-05-08 move to
+# Mossworks-Labs/actions broke every public caller (mcp-*): public repos
+# cannot call reusable workflows living in a private repo, and cannot see
+# the private-visibility org var DEFAULT_RUNNER_NAME (self-hosted runners
+# on public repos are a fork-PR security risk anyway).
+# Canonical version: Mossworks-Labs/actions/.github/workflows (private) —
+# when updating it, mirror the change here (runner lines excepted).
+# ─────────────────────────────────────────────────────────────────────────
+
+on:
+  workflow_call:
+    inputs:
+      image-name:
+        description: "Image name (e.g., studio, mcp-storytelling)"
+        type: string
+        required: true
+      context:
+        description: "Docker build context"
+        type: string
+        default: "."
+      dockerfile:
+        description: "Dockerfile path"
+        type: string
+        default: "Dockerfile"
+      registry:
+        description: "Container registry"
+        type: string
+        default: "ghcr.io"
+      image-prefix:
+        description: "Image prefix (org/repo)"
+        type: string
+        default: "vibesmiths"
+      source-changed:
+        description: "Whether source paths for this image changed. When false (and pushing on a branch) and :latest exists, the job pulls :latest and retags it with every tag metadata-action would have applied (`:<sha>`, `:<branch>`, and `:latest` on the default branch) instead of rebuilding. If :latest is missing it falls back to a normal build so the deploy still finds the SHA tag."
+        type: boolean
+        default: true
+      runs-on:
+        description: "Runner label. Defaults to GitHub-hosted ubuntu-latest (this public copy cannot see the org's private runner var); pass an explicit label to override."
+        type: string
+        default: ""
+      target:
+        description: "Optional Dockerfile build target (named stage). Leave empty to build the final stage. Used when one Dockerfile produces multiple images via multi-stage targets."
+        type: string
+        default: ""
+      build-args:
+        description: "Newline-separated list of `KEY=VALUE` build args to forward to docker build. Use sparingly — anything sensitive belongs in `secrets` (BuildKit secrets) instead, since build-args land in image history. Example use: passing VITE_API_BASE_URL into a frontend SPA build."
+        type: string
+        default: ""
+      platforms:
+        description: "Comma-separated target platforms (e.g. `linux/amd64,linux/arm64`). Empty (default) builds for the runner's native platform only. Multi-arch builds set up QEMU automatically; expect 5-10x build time on the non-native arch via emulation."
+        type: string
+        default: ""
+      timeout-minutes:
+        description: "Hard cap (minutes) on the build job before GitHub cancels it. Default 45 — roughly 2x a typical multi-arch (amd64 + arm64-via-QEMU) build, so it kills a hung build without failing a healthy slow one. Raise for larger images."
+        type: number
+        default: 45
+    secrets:
+      build-secrets:
+        description: "Newline-separated list of `KEY=VALUE` BuildKit secrets to forward to docker build. Mounted via `--mount=type=secret,id=KEY` in the Dockerfile so the value never lands in image layers or history. Use this for npm/registry tokens needed to install private deps at build time (e.g. NODE_AUTH_TOKEN for @mossworks-labs scoped packages from GitHub Packages)."
+        required: false
+
+permissions:
+  contents: read
+  packages: write
+
+jobs:
+  build:
+    name: Build — ${{ inputs.image-name }}
+    runs-on: ${{ inputs.runs-on || 'ubuntu-latest' }}
+    timeout-minutes: ${{ inputs.timeout-minutes }}
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: docker/login-action@v4
+        with:
+          registry: ${{ inputs.registry }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - uses: docker/metadata-action@v6
+        id: meta
+        with:
+          images: ${{ inputs.registry }}/${{ inputs.image-prefix }}/${{ inputs.image-name }}
+          tags: |
+            type=sha,prefix=
+            type=ref,event=branch
+            type=ref,event=pr
+            type=raw,value=latest,enable={{is_default_branch}}
+
+      - name: Decide mode (build vs retag)
+        id: mode
+        run: |
+          set -euo pipefail
+          IMAGE="${{ inputs.registry }}/${{ inputs.image-prefix }}/${{ inputs.image-name }}"
+          IS_PUSH="${{ github.event_name == 'push' || github.event_name == 'workflow_dispatch' }}"
+          if [ "${{ inputs.source-changed }}" = "true" ]; then
+            echo "mode=build" >> "$GITHUB_OUTPUT"
+            echo "Source changed — building."
+          elif [ "$IS_PUSH" != "true" ]; then
+            # PR runs never push; fall back to build (cache-from will keep it cheap).
+            echo "mode=build" >> "$GITHUB_OUTPUT"
+            echo "Non-push event — building (no retag for PRs)."
+          elif docker manifest inspect "$IMAGE:latest" >/dev/null 2>&1; then
+            echo "mode=retag" >> "$GITHUB_OUTPUT"
+            echo "Source unchanged and :latest exists — will retag."
+          else
+            echo "mode=build" >> "$GITHUB_OUTPUT"
+            echo "::warning::Source unchanged but :latest is missing for $IMAGE — falling back to build."
+          fi
+
+      - uses: docker/setup-qemu-action@v4
+        if: steps.mode.outputs.mode == 'build' && inputs.platforms != ''
+
+      - uses: docker/setup-buildx-action@v4
+        if: steps.mode.outputs.mode == 'build'
+
+      - name: Build & push
+        if: steps.mode.outputs.mode == 'build'
+        uses: docker/build-push-action@v7
+        with:
+          context: ${{ inputs.context }}
+          file: ${{ inputs.dockerfile }}
+          target: ${{ inputs.target }}
+          platforms: ${{ inputs.platforms }}
+          push: ${{ github.event_name == 'push' || github.event_name == 'workflow_dispatch' }}
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          build-args: ${{ inputs.build-args }}
+          secrets: ${{ secrets.build-secrets }}
+          cache-from: type=gha
+          # mode=min only caches FROM lines + final layers, not every
+          # intermediate. The cache-to step on bryo's image was running
+          # ~50s/build under mode=max because node_modules (~600MB) was
+          # being uploaded into the GHA cache backend on every build.
+          # mode=min trades partial cache restores for much faster
+          # exports — net win when most rebuilds touch source (cheap
+          # tail layers) rather than the lockfile (already a slow case).
+          cache-to: type=gha,mode=min,ignore-error=true
+
+      - name: Retag :latest as every metadata tag
+        if: steps.mode.outputs.mode == 'retag'
+        env:
+          META_TAGS: ${{ steps.meta.outputs.tags }}
+        run: |
+          set -euo pipefail
+          IMAGE="${{ inputs.registry }}/${{ inputs.image-prefix }}/${{ inputs.image-name }}"
+          # Pull the source image we'll re-tag.
+          docker pull "$IMAGE:latest"
+          # docker/metadata-action emits each `image:tag` ref on its own line.
+          # Apply every one — typically `:<sha>`, `:<branch>`, and `:latest`
+          # on the default branch. The `:latest` self-tag is a harmless no-op.
+          # This keeps :main / :latest in lockstep with :<sha> for services
+          # whose source didn't change in this push (otherwise :main would
+          # rot at whatever the last source-changed build produced).
+          while IFS= read -r ref; do
+            [ -z "$ref" ] && continue
+            echo "Tagging $ref"
+            docker tag "$IMAGE:latest" "$ref"
+            docker push "$ref"
+          done <<< "$META_TAGS"
+
+      - name: Summary
+        run: |
+          echo "### Docker — ${{ inputs.image-name }} (${{ steps.mode.outputs.mode }})" >> "$GITHUB_STEP_SUMMARY"
+          echo '```' >> "$GITHUB_STEP_SUMMARY"
+          echo "${{ steps.meta.outputs.tags }}" >> "$GITHUB_STEP_SUMMARY"
+          echo '```' >> "$GITHUB_STEP_SUMMARY"
